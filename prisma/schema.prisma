@@ -1,0 +1,100 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String        @id @default(uuid())
+  email        String        @unique
+  username     String        @unique
+  password     String
+  image        String?
+  createdAt    DateTime      @default(now())
+  refreshToken String?       @unique
+  messages     Messages[]
+  chatMembers  ChatMember[]
+  messageReads MessageRead[]
+
+  @@index([createdAt])
+}
+
+model Chat {
+  id            String       @id @default(cuid())
+  isGroup       Boolean      @default(false)
+  name          String?      @unique
+  createdAt     DateTime     @default(now())
+  image         String?
+  lastMessageAt DateTime?
+  lastMessage   String?
+  messages      Messages[]
+  chatMembers   ChatMember[]
+
+  @@index([lastMessageAt])
+  @@index([createdAt])
+}
+
+model ChatMember {
+  memberId String
+  chatId   String
+  joinedAt DateTime @default(now())
+  role     String   @default("member")
+
+  member User @relation(fields: [memberId], references: [id])
+  chat   Chat @relation(fields: [chatId], references: [id])
+
+  @@unique([memberId, chatId])
+  @@index([chatId])
+  @@index([memberId])
+}
+
+model Messages {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+
+  senderId String
+  chatId   String
+
+  sender       User          @relation(fields: [senderId], references: [id])
+  chat         Chat          @relation(fields: [chatId], references: [id])
+  messageReads MessageRead[]
+  attachments  Attachment[]
+
+  @@index([chatId, createdAt])
+  @@index([senderId, createdAt])
+}
+
+model MessageRead {
+  id        String   @id @default(cuid())
+  messageId String
+  userId    String
+  readAt    DateTime @default(now())
+
+  message Messages @relation(fields: [messageId], references: [id])
+  user    User     @relation(fields: [userId], references: [id])
+
+  @@unique([messageId, userId])
+  @@index([userId])
+  @@index([messageId])
+}
+
+model Attachment {
+  id        String @id @default(cuid())
+  url       String
+  type      String
+  messageId String
+
+  message Messages @relation(fields: [messageId], references: [id])
+
+  @@index([messageId])
+}
