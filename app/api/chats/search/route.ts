@@ -1,25 +1,19 @@
 import { NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
-import { requireUser } from "@/lib/auth"
+import { getCurrUserId } from "@/lib/auth"
 
 
 export async function GET(req: Request) {
   try {
-    const userPayload = await requireUser()
-    if (!userPayload) {
-      return NextResponse.json(
-        { msg: "Unauthorized User" },
-        { status: 401 }
-      )
-    } 
-  
-    const {searchParams} = new URL(req.url)
+    const currentUserId = await getCurrUserId(req)
+
+    const { searchParams } = new URL(req.url)
     const keyword = searchParams.get("keyword") ?? ""
 
-    if(!keyword || !String(keyword)){
+    if (!keyword || !String(keyword)) {
       return NextResponse.json(
-        {msg: "Need a Valid Keyword"},
-        {status: 404}
+        { msg: "Need a Valid Keyword" },
+        { status: 404 }
       )
     }
 
@@ -30,33 +24,81 @@ export async function GET(req: Request) {
 
     const chatsFound = await prisma.chat.findMany({
       where: {
-       OR: [ {name: {
-          contains: keyword,
-          mode: "insensitive"
-        }},
-        {lastMessage: {
-          contains: keyword,
-          mode: "insensitive"
-        }}]
+        AND: [
+          { chatMembers: { some: { memberId: currentUserId } } },
+          {
+            OR: [
+              {
+                name: {
+                  contains: keyword,
+                  mode: "insensitive",
+                },
+              },
+              {
+                lastMessage: {
+                  contains: keyword,
+                  mode: "insensitive",
+                },
+              },
+            ],
+          },
+        ],
+      },
+      include: {
+        chatMembers: {
+          include: {
+            member: {
+              select: {
+                id: true,
+                username: true,
+                image: true,
+              },
+            },
+          },
+        },
       },
       orderBy: { lastMessageAt: "desc" },
       skip,
       take
     })
 
-    if(!chatsFound || chatsFound.length === 0){
+    if (!chatsFound || chatsFound.length === 0) {
       return NextResponse.json(
-        {msg: "No Chats Found"},
-        {status: 404}
+        { msg: "No Chats Found" },
+        { status: 404 }
       )
     }
 
-    return NextResponse.json(
-      {data: chatsFound},
-      {status: 200}
-    )
-  
-  
+    const formattedChats = chatsFound.map((chat) => {
+      const members = chat.chatMembers.map((chatMember) => chatMember.member);
+
+      if (members.length === 2 && !chat.isGroup) {
+        const otherUser = members.find((member) => member.id !== currentUserId);
+
+        return {
+          id: chat.id,
+          name: otherUser?.username ?? "Unknown User",
+          image: otherUser?.image ?? null,
+          lastMessage: chat.lastMessage,
+          lastMessageAt: chat.lastMessageAt,
+          isGroup: false,
+        };
+      }
+
+
+      return {
+        id: chat.id,
+        name: chat.name ?? "Group Chat",
+        image: chat.image ?? null,
+        lastMessage: chat.lastMessage,
+        lastMessageAt: chat.lastMessageAt,
+        isGroup: true,
+      };
+    });
+    return NextResponse.json({ data: formattedChats });
+
+
+
   } catch (err) {
     console.error(err)
     return NextResponse.json(

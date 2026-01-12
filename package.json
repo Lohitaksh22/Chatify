@@ -21,6 +21,8 @@
     "next-cloudinary": "^6.17.5",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "react-hot-toast": "^2.6.0",
+    "react-swipeable": "^7.0.2",
     "uuid": "^13.0.0"
   },
   "devDependencies": {

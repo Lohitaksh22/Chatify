@@ -1,44 +1,72 @@
-let refreshPromise: Promise<void> | null = null
+import { useCallback } from "react";
+import { useAuth } from "@/app/contexts/AuthContext";
 
-async function refreshSession() {
-  if (!refreshPromise) {
-    refreshPromise = (async () => {
-      const res = await fetch('/api/auth/refresh', {
-        method: 'POST',
-        credentials: 'include',
+let isRefreshing: Promise<string | null> | null = null;
+
+export function useClientFetch() {
+  const auth = useAuth();
+  const setToken = auth?.setToken ?? (() => {});
+
+  return useCallback(
+    async (input: RequestInfo, init: RequestInit = {}) => {
+      const currentToken = auth?.token ?? null;
+      
+      const headers = new Headers(init.headers ?? {});
+
+      if (currentToken) {
+        headers.set("Authorization", `Bearer ${currentToken}`);
+      }
+
+      const res = await fetch(input, {
+        ...init,
+        headers,
+        credentials: "include",
       });
 
-      if (!res.ok) {
-        throw new Error('Refresh failed')
+      if (res.status !== 401) {
+        return res;
       }
-    })();
-  }
 
-  try {
-    await refreshPromise
-  } finally {
-    refreshPromise = null
-  }
-}
+      console.log("useClientFetch - got 401, starting refresh");
 
-export async function clientFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
-  const options: RequestInit = {
-    ...init,
-    credentials: 'include',
-  };
+      if (!isRefreshing) {
+        isRefreshing = fetch("/api/auth/refresh", {
+          method: "POST",
+          credentials: "include",
+        })
+          .then(async newRes => {
+            console.log("refresh response status:", newRes.status);
+            if (!newRes.ok) return null;
+            const payload = await newRes.json();
+            console.log("refresh payload:", payload);
+            return payload.accessToken ?? null;
+          })
+          .finally(() => {
+            isRefreshing = null;
+          });
+      } else {
+        console.log("useClientFetch - waiting for ongoing refresh");
+      }
 
+      const newToken = await isRefreshing;
 
-  const response = await fetch(input, options)
+      if (!newToken) {
+        console.log("useClientFetch - refresh failed");
+        setToken(null);
+        return res;
+      }
 
-  if (response.status !== 401) {
-    return response
-  }
+      console.log("useClientFetch - refresh succeeded, newToken:", Boolean(newToken));
+      setToken(newToken);
+      headers.set("Authorization", `Bearer ${newToken}`);
 
-  try {
-    await refreshSession()
-  } catch {
-    return response
-  }
-
-  return fetch(input, options)
+      return fetch(input, {
+        ...init,
+        headers,
+        credentials: "include",
+      });
+    },
+    
+    [auth, setToken]
+  );
 }

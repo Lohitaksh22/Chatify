@@ -31,7 +31,7 @@ model User {
 model Chat {
   id            String       @id @default(cuid())
   isGroup       Boolean      @default(false)
-  name          String?      @unique
+  name          String?
   createdAt     DateTime     @default(now())
   image         String?
   lastMessageAt DateTime?
@@ -61,6 +61,7 @@ model Messages {
   id        String   @id @default(cuid())
   content   String
   createdAt DateTime @default(now())
+  edit      Boolean  @default(false)
 
   senderId String
   chatId   String

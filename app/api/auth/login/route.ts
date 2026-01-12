@@ -56,22 +56,21 @@ export async function POST(req: Request) {
       where: { id: user.id },
       data: { refreshToken: hashedRefresh },
     })
-    const res = NextResponse.json({ accessToken })
-    
+    const res = NextResponse.json({ accessToken });
 
     res.cookies.set({
       name: "refreshToken",
       value: refreshToken,
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === "production", 
       path: "/",
-      maxAge: 24 * 60 * 60 * 60,
+      maxAge: 60 * 24 * 60 * 60, 
       sameSite: "lax",
-    })
+    });
 
-    return res
+    return res;
 
-    
+
 
 
   } catch (err) {

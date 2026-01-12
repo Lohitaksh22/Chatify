@@ -1,18 +1,12 @@
 import { NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
-import { requireUser } from "@/lib/auth"
+import { getCurrUserId } from "@/lib/auth";
 
 export async function PATCH(req: Request, {params}: {params: {chatId: string; messageId: string} }){
  try{
-     const userPayload = await requireUser()
-    if (!userPayload) {
-      return NextResponse.json(
-        { msg: "Unauthorized User" },
-        { status: 401 }
-      )
-    }
+     const currentUserId = await getCurrUserId(req)
 
-    const {chatId, messageId} = params
+    const {chatId, messageId} = await params
     const chat = await prisma.chat.findUnique({
       where: {id: chatId},
       include: { messages: true
@@ -29,7 +23,7 @@ export async function PATCH(req: Request, {params}: {params: {chatId: string; me
     const isMember = await prisma.chatMember.findUnique({
       where: {
         memberId_chatId: {
-          memberId: userPayload.sub,
+          memberId: currentUserId,
           chatId
         }
       }
@@ -47,7 +41,7 @@ export async function PATCH(req: Request, {params}: {params: {chatId: string; me
       where: {id: messageId}
     })
     
-    if(!(message?.senderId===userPayload.sub) || !(message?.chatId===chatId) ||!message){
+    if(!(message?.senderId===currentUserId) || !(message?.chatId===chatId) ||!message){
        return NextResponse.json(
         {msg: "Forbidden"},
         {status: 403}
@@ -63,8 +57,10 @@ export async function PATCH(req: Request, {params}: {params: {chatId: string; me
     const res = await prisma.messages.update({
       where: {id: messageId},
       data:{
-        content
+        content,
+        edit: true
       },
+      
       include: {
         sender: { select: { id: true, username: true, image: true } },
         attachments: true,
@@ -93,17 +89,11 @@ export async function PATCH(req: Request, {params}: {params: {chatId: string; me
   }
 }
 
-export async function DELETE({params}: {params: {chatId: string; messageId: string}}) {
+export async function DELETE(req:Request, {params}: {params: {chatId: string; messageId: string}}) {
   try{
-     const userPayload = await requireUser()
-    if (!userPayload) {
-      return NextResponse.json(
-        { msg: "Unauthorized User" },
-        { status: 401 }
-      )
-    }
+    const currentUserId = await getCurrUserId(req)
 
-    const {chatId, messageId} = params
+    const {chatId, messageId} = await params
     const chat = await prisma.chat.findUnique({
       where: {id: chatId},
       include: { messages: true
@@ -120,7 +110,7 @@ export async function DELETE({params}: {params: {chatId: string; messageId: stri
     const isMember = await prisma.chatMember.findUnique({
       where: {
         memberId_chatId: {
-          memberId: userPayload.sub,
+          memberId: currentUserId,
           chatId
         }
       }
@@ -138,7 +128,7 @@ export async function DELETE({params}: {params: {chatId: string; messageId: stri
       where: {id: messageId}
     })
     
-    if(!(message?.senderId===userPayload.sub) || !(message?.chatId===chatId) ||!message){
+    if(!(message?.senderId===currentUserId) || !(message?.chatId===chatId) ||!message){
        return NextResponse.json(
         {msg: "Forbidden"},
         {status: 403}

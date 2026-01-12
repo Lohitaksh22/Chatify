@@ -1,15 +1,19 @@
 import { NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
-import { requireUserFromRequest } from "@/lib/auth"
+import { getCurrUserId } from "@/lib/auth"
 
 
 export async function GET(req: Request) {
   try {
+    const userId = await getCurrUserId(req)
     
-    
+
 
     const { searchParams } = new URL(req.url)
     const keyword = searchParams.get("keyword") ?? ""
+    const exclude = searchParams.get("exclude")
+
+    const excludeIds = exclude ? exclude.split(",").map((id) => id.trim()): [];
 
     if (!keyword || !String(keyword)) {
       return NextResponse.json(
@@ -18,26 +22,27 @@ export async function GET(req: Request) {
       )
     }
 
-    const limit = Number(searchParams.get("limit") ?? 20)
+    const limit = Number(searchParams.get("limit") ?? 10)
     const page = Math.max(0, Number(searchParams.get("page") ?? 0))
     const take = Math.min(Math.max(1, limit), 100)
     const skip = page * take
 
     const usersFound = await prisma.user.findMany({
       where: {
-        AND: [
-          {
-            username: {
-              contains: keyword,
-              mode: "insensitive",
-            },
-          },
-          {
-            id: {
-              
-            },
-          },
-        ],
+
+
+        username: {
+          contains: keyword,
+          mode: "insensitive",
+        },
+
+
+        id: {
+          notIn: excludeIds,
+          not: userId
+        },
+
+
       },
       orderBy: { createdAt: "desc" },
       skip,

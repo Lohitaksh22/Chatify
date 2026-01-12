@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useAuth } from "@/app/contexts/AuthContext";
 
 const Page = () => {
   const router = useRouter();
@@ -9,6 +10,7 @@ const Page = () => {
   const [password, setPassword] = useState<string>("");
   const [error, setError] = useState<string | null>();
   const [isLoading, setIsLoading] = useState(false);
+  const auth = useAuth()
 
   const validPassword = (password: string) => {
     if (!password) return false;
@@ -34,14 +36,17 @@ const Page = () => {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
+      
 
       if (!res.ok) {
         const data = await res.json().catch(() => null);
-        throw new Error(data?.error || "Login failed");
+        throw new Error(data?.msg || "Login failed");
       }
-
+      const data = await res.json()
+      auth?.setToken(data.accessToken)
       router.push("/");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));
@@ -60,7 +65,7 @@ const Page = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#020617] flex items-center justify-center">
-      <form className="flex flex-col items-center space-y-4 max-w-md w-full bg-[#1F2933] p-8 rounded-2xl shadow-xl shadow-black/90">
+      <form className="flex flex-col items-center space-y-4 max-w-md w-full bg-[#1F2933] border border-white/20 p-8 rounded-2xl shadow-xl shadow-black/90">
         <h1 className="text-3xl font-bold mb-4 text-center">Login Here</h1>
 
         <input
@@ -69,7 +74,7 @@ const Page = () => {
           required
           placeholder="Enter Email"
           className="w-full mt-5 outline-none bg-[#262A33] border border-[#374151] rounded-xl px-4 py-2
-           focus:ring-2 focus:ring-[#6B7280] transition duration-300"
+           focus:ring-2 focus:ring-slate-200 transition duration-300"
         />
 
         <input
@@ -79,20 +84,21 @@ const Page = () => {
           required
           className="
         outline-none border bg-[#262A33] border-[#374151] rounded-xl px-4 py-2
-          w-full invalid:border-pink-500 invalid:text-pink-500  focus:ring-2 focus:ring-[#6B7280] transition duration-300"
+          w-full invalid:border-pink-500 invalid:text-pink-500  focus:ring-2 focus:ring-slate-200 transition duration-300"
         />
 
         {error && <p className="text-red-600">{error}</p>}
 
-        {isValidEmail(email) && validPassword(password) && (
+        
           <button
             type="submit"
             onClick={handleSubmit}
-            className="shadow-lg mt-4    bg-[#334155] px-16 py-2 w-full rounded-full font-medium transform transition duration-300 hover:scale-105 active:scale-105 hover:bg-[#64748B] cursor-pointer focus:outline-none focus:ring focus:ring-[#6B7280] focus:ring-offset-1 active:bg-[#64748B]"
+             disabled={!isValidEmail(email) || !validPassword(password)}
+            className="shadow-lg mt-4 disabled:cursor-not-allowed    bg-[#334155] px-16 py-2 w-full rounded-full font-medium transform transition duration-300 hover:scale-105 active:scale-105 hover:bg-[#64748B] cursor-pointer focus:outline-none focus:ring focus:ring-slate-200 focus:ring-offset-1 active:bg-[#64748B]"
           >
             {isLoading ? "Going to Messages..." : "Go to Messages"}
           </button>
-        )}
+        
 
         <div className="flex space-x-2 mt-5 text-sm">
           <p>Visiting for the first time?</p>

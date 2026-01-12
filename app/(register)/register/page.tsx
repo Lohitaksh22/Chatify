@@ -3,30 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-function avatarColor(name: string) {
-  let hash = 0;
-  for (const c of name) hash += c.charCodeAt(0);
-  return `hsl(${hash % 360}, 70%, 50%)`;
-}
 
-function createAvatarSvg(name: string, size = 512) {
-  const letter = (name?.trim()?.[0] || "U").toUpperCase();
-  const bg = avatarColor(name || letter);
-  return `
-    <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">
-      <rect width="100%" height="100%" fill="${bg}" rx="${Math.floor(size / 8)}"/>
-      <text x="50%" y="50%" dy=".06em"
-            font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial"
-            font-weight="600"
-            text-anchor="middle" fill="#fff"
-            font-size="${Math.floor(size * 0.5)}">${letter}</text>
-    </svg>
-  `.trim();
-}
-
-async function svgToBlob(svg: string) {
-  return new Blob([svg], { type: "image/svg+xml" });
-}
 
 const Page = () => {
   const router = useRouter();
@@ -38,25 +15,38 @@ const Page = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [preview, setPreview] = useState<string | null>(null);
 
-  async function uploadToCloudinary(file: File | Blob, folder = "temp/registrations") {
-    const url = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/upload`;
-    const form = new FormData();
-    form.append("upload_preset", process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!);
-    form.append("folder", folder);
-    const uploadFile =
-      file instanceof File
-        ? file
-        : new File([file], `avatar_${Date.now()}.svg`, {
-            type: (file as Blob).type || "image/svg+xml",
-          });
-    form.append("file", uploadFile);
-    const res = await fetch(url, { method: "POST", body: form });
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error("Cloudinary upload failed: " + text);
-    }
-    return res.json();
+  async function uploadToCloudinary(
+  file: File | null,
+  folder = "users/registrations"
+) {
+  if (!file) {
+    return {
+      public_id: "defaults/user-avatar",
+      secure_url:
+        "https://res.cloudinary.com/dptlaoyr2/image/upload/v1767468846/OIP.ghDeAxQENeJRnpp7tlZyCwHaHa_orc4ru.jpg",
+    };
   }
+
+  const url = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/upload`;
+
+  const form = new FormData();
+  form.append(
+    "upload_preset",
+    process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!
+  );
+  form.append("folder", folder);
+  form.append("file", file);
+
+  const res = await fetch(url, { method: "POST", body: form });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error("Cloudinary upload failed: " + text);
+  }
+
+  return res.json();
+}
+
 
   const isValidEmail = (email: string) => {
     const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
@@ -101,17 +91,11 @@ const Page = () => {
     try {
       let imageUrl: string | null = null;
 
-      if (file) {
+     
         const uploaded = await uploadToCloudinary(file);
         imageUrl = uploaded.secure_url as string;
-      } else {
-        const nameForAvatar = username || email || "User";
-        const svg = createAvatarSvg(nameForAvatar, 512);
-        setPreview(`data:image/svg+xml;utf8,${encodeURIComponent(svg)}`);
-        const svgBlob = await svgToBlob(svg);
-        const uploaded = await uploadToCloudinary(svgBlob);
-        imageUrl = uploaded.secure_url as string;
-      }
+      
+        
 
       const res = await fetch("/api/auth/register", {
         method: "POST",
@@ -119,9 +103,10 @@ const Page = () => {
         body: JSON.stringify({ email, username, password, image: imageUrl }),
       });
 
+
       if (!res.ok) {
         const data = await res.json().catch(() => null);
-        throw new Error(data?.error || "Registration failed");
+        throw new Error(data?.msg || "Registration failed");
       }
 
       router.push("/login");
@@ -135,7 +120,7 @@ const Page = () => {
 
   return (
     <div className="bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#020617] min-h-screen flex items-center justify-center">
-      <form className="flex flex-col items-center space-y-4 max-w-md w-full bg-[#1F2933] p-8 rounded-2xl shadow-xl shadow-black/90">
+      <form className="flex flex-col items-center space-y-4 max-w-md w-full bg-[#1F2933]  border border-white/20 p-8 rounded-2xl shadow-xl shadow-black/90">
         <h1 className="text-3xl font-bold mb-4 text-center">Register Here</h1>
 
         <input
@@ -144,7 +129,7 @@ const Page = () => {
           required
           placeholder="Enter Username to Chat"
           className="w-full mt-5 outline-none bg-[#262A33] border border-[#374151] rounded-xl px-4 py-2
-           focus:ring-2 focus:ring-[#6B7280] transition duration-300"
+           focus:ring-2 focus:ring-slate-200 transition duration-300"
         />
 
         <input
@@ -153,7 +138,7 @@ const Page = () => {
           required
           placeholder="Enter Email"
           className="w-full  outline-none bg-[#262A33] border border-[#374151] rounded-xl px-4 py-2
-           focus:ring-2 focus:ring-[#6B7280] transition duration-300"
+           focus:ring-2 focus:ring-slate-200 transition duration-300"
         />
 
         {email && !isValidEmail(email) && (
@@ -168,7 +153,7 @@ const Page = () => {
           placeholder="Password"
           className="
         outline-none border bg-[#262A33] border-[#374151] rounded-xl px-4 py-2
-          w-full invalid:border-pink-500 invalid:text-pink-500  focus:ring-2 focus:ring-[#6B7280] transition duration-300"
+          w-full invalid:border-pink-500 invalid:text-pink-500  focus:ring-2 focus:ring-slate-200 transition duration-300"
         />
 
         <label
@@ -200,12 +185,12 @@ const Page = () => {
           <button
             onClick={handleSubmit}
             type="submit"
-            className="shadow-lg mt-4 mb-4 bg-[#334155] px-16 py-2 w-full rounded-full font-medium transform transition duration-300 hover:scale-105 active:scale-105 hover:bg-[#64748B] cursor-pointer focus:outline-none focus:ring focus:ring-[#6B7280] focus:ring-offset-1 active:bg-[#64748B]"
+            className="shadow-lg mt-4 mb-4 bg-[#334155] px-16 py-2 w-full rounded-full font-medium transform transition duration-300 hover:scale-105 active:scale-105 hover:bg-[#64748B] cursor-pointer focus:outline-none focus:ring focus:ring-slate-200 focus:ring-offset-1 active:bg-[#64748B]"
           >
             {isLoading ? "Signing up..." : "Sign Up"}
           </button>
         ) : (
-          <div className="text-sm font-bold text-red-500 leading-relaxed mt-2">
+          <div className= "text-sm font-bold  leading-relaxed mt-2" >
             Password must include:
             <ul className="list-disc list-inside text-red-500 text-sm font-semibold ">
               <li

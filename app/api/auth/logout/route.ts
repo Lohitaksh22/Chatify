@@ -38,6 +38,17 @@ export async function POST(){
       maxAge: 0,
     })
 
+    res.cookies.set({
+    name: "accessToken",
+    value: "",
+    httpOnly: true,
+    path: "/",
+    maxAge: 0,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+  })
+
+
     return res
 
 

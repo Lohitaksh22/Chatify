@@ -1,25 +1,31 @@
 import { NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
-import { requireUser } from "@/lib/auth"
+import { getCurrUserId } from "@/lib/auth"
 
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const userPayload = await requireUser()
-    if (!userPayload) {
-      return NextResponse.json(
-        { msg: "Unauthorized User" },
-        { status: 401 }
-      )
-    }
-
-    const allChats = await prisma.chat.findMany({
+    const currentUserId = await getCurrUserId(req)
+    const chatsFound = await prisma.chat.findMany({
       where: {
         chatMembers: {
           some: {
-            memberId: userPayload.sub
+            memberId: currentUserId
           }
         }
+      },
+      include: {
+        chatMembers: {
+          include: {
+            member: {
+              select: {
+                id: true,
+                username: true,
+                image: true,
+              },
+            },
+          },
+        },
       },
       orderBy: {
         lastMessageAt: "desc"
@@ -27,12 +33,34 @@ export async function GET() {
     })
 
 
+    const formattedChats = chatsFound.map((chat) => {
+      const members = chat.chatMembers.map((chatMember) => chatMember.member);
 
-    return NextResponse.json(
-      { data: allChats },
-      { status: 200 }
-    )
+      if (members.length === 2 && !chat.isGroup) {
+        const otherUser = members.find((member) => member.id !== currentUserId);
 
+        return {
+          id: chat.id,
+          name: otherUser?.username ?? "Unknown User",
+          image: otherUser?.image ?? null,
+          lastMessage: chat.lastMessage,
+          lastMessageAt: chat.lastMessageAt,
+          isGroup: false,
+        };
+      }
+
+
+      return {
+        id: chat.id,
+        name: chat.name ?? "Group Chat",
+        image: chat.image ?? null,
+        lastMessage: chat.lastMessage,
+        lastMessageAt: chat.lastMessageAt,
+        isGroup: true,
+      };
+    });
+
+    return NextResponse.json({ data: formattedChats });
 
   } catch (err) {
     console.error(err)
@@ -45,44 +73,32 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const userPayload = await requireUser()
-    if (!userPayload) {
-      return NextResponse.json(
-        { msg: "Unauthorized User" },
-        { status: 401 }
-      )
-    }
+    const currentUserId = await getCurrUserId(req)
 
-    const { name, usernames, image } = await req.json()
+    const { name, id, image } = await req.json()
     let isGroup = false
-    const currentUserId = userPayload.sub
-
-  
 
 
-    if (!usernames || !Array.isArray(usernames) || usernames.length === 0) {
+    if (!id || !Array.isArray(id) || id.length === 0) {
       return NextResponse.json(
         { msg: "Need People to Chat" },
         { status: 400 }
       )
     }
 
-    const users = await Promise.all(
-      usernames.map((userName) =>
-        prisma.user.findUnique({
-          where: { username: userName }
-        })
-      )
-    )
 
-     const memberIds = users.map(user => user?.id)
+
+
+
+    const memberIds = id
+    memberIds.push(String(currentUserId))
 
     if (memberIds.length >= 3) {
       isGroup = true
     }
 
     const finalMembers = memberIds.map(String)
-    finalMembers.push(String(currentUserId))
+
 
 
     if (isGroup && (!image || typeof image !== "string" || image.trim() === "")) {
@@ -126,7 +142,7 @@ export async function POST(req: Request) {
       })
 
       if (existing) {
-        return NextResponse.json({ chat: existing }, { status: 200 })
+        return NextResponse.json({ chat: existing }, { status: 400 })
       }
     }
 
@@ -152,7 +168,7 @@ export async function POST(req: Request) {
       await tx.chatMember.update({
         where: {
           memberId_chatId: {
-            memberId: userPayload.sub,
+            memberId: currentUserId,
             chatId: createdChat.id,
           }
         },
@@ -189,3 +205,4 @@ export async function POST(req: Request) {
     )
   }
 }
+
