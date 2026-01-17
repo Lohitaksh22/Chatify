@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { getCurrUserId } from "@/lib/auth";
+import { ChatMember } from "@/app/generated/prisma";
 
 export async function GET(req: Request, { params }: { params: { chatId: string } }) {
   try {
@@ -154,7 +155,7 @@ export async function POST(req: Request, { params }: { params: { chatId: string 
 
     const foundByUsername = new Map(foundUsers.map(u => [u.username, u.id]));
 
-    const added: string[] = [];
+    const added: ChatMember[] = [];
     const alreadyMembers: string[] = [];
 
     for (const username of filtered) {
@@ -170,15 +171,17 @@ export async function POST(req: Request, { params }: { params: { chatId: string 
         continue;
       }
 
-      await prisma.chatMember.create({
+     const newMember= await prisma.chatMember.create({
         data: { memberId: userId, chatId },
       });
 
-      added.push(username);
+      added.push(newMember);
     }
 
+    
+
     return NextResponse.json(
-      { msg: "Account(s) added to Chat" },
+      {data: added},
       { status: 200 }
     )
 
@@ -311,7 +314,7 @@ export async function DELETE(req: Request, { params }: { params: { chatId: strin
     });
 
     
-    return NextResponse.json({ msg: "User deleted from Chat" }, { status: 200 });
+    return NextResponse.json({data: isAdminMember }, { status: 200 });
   } catch (err) {
     console.error(err);
     return NextResponse.json({ message: "Server error" }, { status: 500 });
@@ -394,6 +397,10 @@ export async function PATCH(req: Request, {params}: {params: {chatId: string}}){
         }},
         data:{
           role: "admin"
+        },
+        include:{
+          member: true
+
         }
       })
 

@@ -21,10 +21,10 @@ const SettingsComp = () => {
       router.push("/login")
   }
   return (
-    <div className="relative inline-flex">
+    <div className="">
   <button
     onClick={handleClick}
-    className="rounded-full p-2 hover:scale-105 cursorr-pointer transition"
+    className="rounded-full p-2 hover:scale-105 cursor-pointer transition"
   >
     <Settings />
   </button>
@@ -32,14 +32,14 @@ const SettingsComp = () => {
   {isOpen && (
     <div 
     onClick={handleClick}
-    className="fixed inset-0 z-40 flex items-center justify-center backdrop-blur-xl p-6">
+    className="fixed inset-0 z-30 flex items-center justify-center backdrop-blur-xl p-6">
       <div
       onClick={(e) => e.stopPropagation()}
-      className="relative z-50 w-full min-h-60 max-w-sm rounded-2xl bg-[radial-gradient(1200px_circle_at_20%_-10%,rgba(56,189,248,0.25),transparent_40%),radial-gradient(900px_circle_at_80%_10%,rgba(168,85,247,0.25),transparent_45%)] shadow-2xl p-6 space-y-10">
+      className="relative z-30 w-full min-h-60 max-w-sm rounded-2xl bg-black bg-[radial-gradient(1200px_circle_at_20%_-10%,rgba(56,189,248,0.25),transparent_40%),radial-gradient(900px_circle_at_80%_10%,rgba(168,85,247,0.25),transparent_45%)] shadow-2xl p-6 space-y-10">
       
         <button
           onClick={handleClick}
-          className="absolute top-4 left-4  hover:text-gray-700 transition text-xl"
+          className="absolute top-4 left-4  hover:text-white transition text-xl"
  
         >
           ×

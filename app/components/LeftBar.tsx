@@ -5,13 +5,16 @@ import { MessageCirclePlus, Search } from "lucide-react";
 import { useClientFetch } from "@/lib/clientAuth";
 import CreateChatHelper from "./subcomponents/CreateChatHelper";
 import { dateCalc } from "@/lib/dateCalc";
+import { useAuth } from "../contexts/AuthContext";
 
 type Conversation = {
-  id: string;
-  name: string;
-  lastMessage?: string;
-  lastMessageAt?: string;
-  image?: string;
+  name: string | null;
+    id: string;
+    image: string | null;
+    createdAt: Date;
+    isGroup: boolean;
+    lastMessageAt: Date | null;
+    lastMessage: string | null;
   
 };
 
@@ -27,6 +30,9 @@ const LeftBar = ({activeId, setActiveId}: Props) => {
   const clientFetch = useClientFetch();
   const [keyword, setKeyword] = useState("");
   const [reloadChats, setReloadChats] = useState(0);
+  const {socket} = useAuth()
+  const sock = socket.current
+  const [newChat, setNewChat] = useState<Conversation | null>(null);
 
 
 
@@ -34,6 +40,47 @@ const LeftBar = ({activeId, setActiveId}: Props) => {
     setIsCreateOpen(!isCreateOpen);
     setReloadChats((i) => i + 1);
   };
+
+  useEffect(() => {
+    if (!sock) return;   
+
+    sock.on("left_member", () => {
+      setReloadChats((i) => i + 1);
+    });
+
+    sock.on("new_message", () => {
+      setReloadChats((i) => i + 1);
+    }); 
+
+    sock.on("chat_updated", ({ chatid, updatedChat }: { chatid: string; updatedChat: Conversation }) => { 
+      if (chatid !== activeId) return;
+      setChat(prev => {
+        if (!prev) return prev; 
+        return prev.map(currentChat => currentChat.id === chatid ? updatedChat : currentChat);
+      });
+      setReloadChats((i) => i + 1);
+    });
+
+    if (newChat) {
+      sock?.emit("create_chat", newChat);
+      setTimeout(() => {
+        setChat((prev) => {
+          if (!prev) return [newChat];
+          return [newChat, ...prev];
+        });
+        setNewChat(null);
+      }, 0);
+    }
+
+    return () => {
+      sock.off("new_message");
+      sock.off("left_member");
+      sock.off("chat_updated");
+    };      
+  }, [sock, newChat]);
+
+ 
+  
 
   useEffect(() => {
     let mounted = true;
@@ -98,7 +145,7 @@ const LeftBar = ({activeId, setActiveId}: Props) => {
             <MessageCirclePlus color="white" onClick={handleCreate} />
           </button>
         </div>
-        {isCreateOpen && <CreateChatHelper handleCreate={handleCreate} />}
+        {isCreateOpen && <CreateChatHelper handleCreate={handleCreate} setNewChat={setNewChat} />}
 
         <div className="relative w-full mt-5 mb-7">
           <Search
@@ -137,8 +184,8 @@ const LeftBar = ({activeId, setActiveId}: Props) => {
                 >
                   <div className="flex">
                     <img
-                      src={c?.image}
-                      alt={`${c.name} avatar`}
+                      src={c?.image ?? undefined}
+    
                       className="w-10 h-10 rounded-full object-cover"
                     />
                   </div>

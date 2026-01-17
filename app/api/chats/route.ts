@@ -25,6 +25,9 @@ export async function GET(req: Request) {
               },
             },
           },
+          orderBy:{
+            joinedAt: "desc"
+          }
         },
       },
       orderBy: {
@@ -183,16 +186,6 @@ export async function POST(req: Request) {
 
     const newCreatedChat = await prisma.chat.findUnique({
       where: { id: created.id },
-      include: {
-        chatMembers: {
-          select: {
-            memberId: true,
-            role: true,
-            joinedAt: true,
-            member: { select: { id: true, username: true, image: true } },
-          },
-        },
-      },
     })
 
     return NextResponse.json({ data: newCreatedChat }, { status: 201 })

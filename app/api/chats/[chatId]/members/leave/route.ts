@@ -47,7 +47,7 @@ export async function DELETE(req: Request, { params }: { params: { chatId: strin
 
       
 
-      if (remaining ===0) {
+      if (remaining < 1) {
         await tx.chat.delete({ where: { id: chatId } });
         return;
       }
@@ -60,7 +60,7 @@ export async function DELETE(req: Request, { params }: { params: { chatId: strin
 
 
     return NextResponse.json({
-      msg: "Removed From Chat"
+      data: isMember
 
     }, { status: 200 })
 

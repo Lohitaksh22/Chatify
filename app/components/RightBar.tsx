@@ -12,12 +12,13 @@ import {
   Pen,
 } from "lucide-react";
 import AddUserToChatHelper from "./subcomponents/AddUserToChatHelper";
-import UpdateChat
- from "./subcomponents/UpdateChat";
+import UpdateChat from "./subcomponents/UpdateChat";
+import { useAuth } from "../contexts/AuthContext";
+
 type Props = {
   activeId: string | null;
   setActiveId: React.Dispatch<React.SetStateAction<string | null>>;
-  reload: number
+  reload: number;
   setReload: React.Dispatch<React.SetStateAction<number>>;
 };
 
@@ -54,6 +55,13 @@ type Members = {
   image: string | null;
 };
 
+type Member = {
+  chatId: string;
+  role: string;
+  memberId: string;
+  joinedAt: Date;
+};
+
 const RightBar = ({ activeId, setActiveId, reload, setReload }: Props) => {
   const clientFetch = useClientFetch();
   const [chatData, setChatData] = useState<Conversation | null>(null);
@@ -66,8 +74,74 @@ const RightBar = ({ activeId, setActiveId, reload, setReload }: Props) => {
     url: string;
     type?: string;
   }>(null);
+  const { socket } = useAuth();
+  const sock = socket.current;
+  const [chatEdit, setChatEdit] = useState(false);
 
-  const [chatEdit, setChatEdit] = useState(false)
+  useEffect(() => {
+    if (!sock || !activeId) return;
+
+    sock.on(
+      "promoted_member",
+      ({ chatId, members }: { chatId: string; members: Member[] }) => {
+        if (chatId !== activeId) return;
+        setReload((prev) => prev + 1);
+      }
+    );
+
+    sock.on(
+      "removed_member",
+      ({
+        chatId,
+        deletedMember,
+      }: {
+        chatId: string;
+        deletedMember: Member;
+      }) => {
+        if (chatId !== activeId) return;
+        setReload((prev) => prev + 1);
+      }
+    );
+
+    sock.on(
+      "left_member",
+      ({ chatId, member }: { chatId: string; member: Member }) => {
+        if (chatId !== activeId) return;
+        setReload((prev) => prev + 1);
+      }
+    );
+
+    sock.on(
+      "added_members",
+      ({ chatId, newMembers }: { chatId: string; newMembers: Member[] }) => {
+        if (chatId !== activeId) return;
+        setReload((prev) => prev + 1);
+      }
+    );
+
+    sock.on(
+      "chat_updated",
+      ({
+        chatid,
+        updatedChat,
+      }: {
+        chatid: string;
+        updatedChat: Conversation;
+      }) => {
+        if (chatid !== activeId) return;
+        setChatData(updatedChat ?? null);
+        setReload((prev) => prev + 1);
+      }
+    );
+
+    return () => {
+      sock.off("added_members");
+      sock.off("promoted_member");
+      sock.off("removed_member");
+      sock.off("left_member");
+      sock.off("chat_updated");
+    };
+  });
 
   const getChatInfo = useCallback(async () => {
     if (!activeId) return;
@@ -139,6 +213,8 @@ const RightBar = ({ activeId, setActiveId, reload, setReload }: Props) => {
       if (!res.ok) {
         return toast.error(data.msg || "Unable to promote at the moment");
       }
+      const member = data?.data;
+      sock?.emit("promote_member", { chatId: activeId, member });
       getChatInfo();
     } catch (err) {
       console.error(err);
@@ -158,6 +234,8 @@ const RightBar = ({ activeId, setActiveId, reload, setReload }: Props) => {
       if (!res.ok) {
         return toast.error(data.msg || "Unable to promote at the moment");
       }
+      const deletedMember = data?.data;
+      sock?.emit("remove_member", { chatId: activeId, deletedMember });
       getChatInfo();
     } catch (err) {
       console.error(err);
@@ -183,8 +261,11 @@ const RightBar = ({ activeId, setActiveId, reload, setReload }: Props) => {
         toast.error("Unable to exit at the moment");
         return;
       }
-      window.location.reload();
 
+      const data = await res.json();
+      sock?.emit("leave_member", { chatId: activeId, member: data?.data });
+
+      window.location.reload();
       toast.dismiss();
       toast.success("You have left the chat group");
     } catch (err) {
@@ -209,6 +290,8 @@ const RightBar = ({ activeId, setActiveId, reload, setReload }: Props) => {
       if (!res.ok) {
         return toast.error(data.msg || "Unable to add at the moment");
       }
+      const newMembers = data?.data;
+      sock?.emit("add_members", { chatId: activeId, newMembers });
       getChatInfo();
     } catch (err) {
       console.error(err);
@@ -236,32 +319,50 @@ const RightBar = ({ activeId, setActiveId, reload, setReload }: Props) => {
             <div className="mt-10 flex flex-col items-center justify-center space-y-2">
               <h1 className=" flex items-center justify-center gap-2 text-xl font-bold truncate mb-10">
                 {chatData.name}
-                {role === "admin" && 
-                <button 
-                onClick={() => setChatEdit(!chatEdit)}
-                title="Edit This Chat">
-                  <Pen size={15} />
-                </button>}
+                {role === "admin" && (
+                  <button
+                    onClick={() => setChatEdit(!chatEdit)}
+                    title="Edit This Chat"
+                  >
+                    <Pen size={15} />
+                  </button>
+                )}
               </h1>
 
-              {chatEdit && <UpdateChat activeId ={activeId} setChatEdit = {setChatEdit} chatData = {chatData} setActiveId={setActiveId} />}
+              {chatEdit && (
+                <UpdateChat
+                  activeId={activeId}
+                  setChatEdit={setChatEdit}
+                  chatData={chatData}
+                  setReload={setReload}
+                />
+              )}
 
-              {chatData?.members && (
+              {chatData && (
                 <div className="w-full flex items-center justify-between px-2 mb-4">
+                  {chatData?.isGroup && (
                   <h3 className="flex items-center gap-2 font-semibold">
                     Members
-                    <button
-                      type="button"
-                      onClick={() => setAddingUser(!addingUser)}
-                    >
-                      <UserRoundPlus
-                        size={35}
-                        className="p-2 hover:text-green-600 hover:font-extrabold active:scale-105 cursor-pointer"
-                      />
-                    </button>
+                    
+                      <button
+                        type="button"
+                        onClick={() => setAddingUser(!addingUser)}
+                      >
+                        <UserRoundPlus
+                          size={36}
+                          className="p-2 hover:text-green-600 hover:font-extrabold active:scale-105 cursor-pointer"
+                        />
+                      </button>
+                    
                   </h3>
+                  )}
 
-                  <span className="text-md">{chatData.members.length}</span>
+                  <span className="text-md">{chatData.members?.length}</span>
+                  {(chatData?.members?.length === 0 || !chatData?.members) && chatData?.isGroup && (
+                    <div className="text-md ml-4 text-gray-400 italic">
+                      0 (Just You)
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -276,12 +377,12 @@ const RightBar = ({ activeId, setActiveId, reload, setReload }: Props) => {
               {chatData?.members?.map((mem) => (
                 <div
                   key={mem.username}
-                  className="flex items-center justify-center gap-3 p-2 rounded-lg bg-[#262A33] hover:bg-[#313644] cursor-pointer transition w-full"
+                  className="flex items-center justify-center gap-3 p-2 rounded-lg bg-[#262A33] hover:bg-[#313644] border border-white/5 cursor-pointer transition min-w-full w-full"
                 >
                   <img
                     src={mem.image || "/avatar.png"}
                     alt={mem.username}
-                    className="w-10 h-10 rounded-full object-cover"
+                    className="w-10 h-10 rounded-full object-fit object-cover"
                   />
 
                   <div className="flex flex-col w-full">
@@ -352,8 +453,9 @@ const RightBar = ({ activeId, setActiveId, reload, setReload }: Props) => {
                             return (
                               <button
                                 key={file.id}
-                                onClick={(e) =>{ setActiveMedia(file)
-                                  e.stopPropagation()
+                                onClick={(e) => {
+                                  setActiveMedia(file);
+                                  e.stopPropagation();
                                 }}
                                 className=" relative aspect-square  rounded-md "
                               >

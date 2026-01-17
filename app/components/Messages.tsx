@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useClientFetch } from "@/lib/clientAuth";
 import MessageBubbleComponent from "./subcomponents/MessageBubble";
 import InputSend from "./subcomponents/InputSend";
+import { useAuth } from "../contexts/AuthContext";
 
 type Props = {
   activeId: string | null;
   setActiveId: React.Dispatch<React.SetStateAction<string | null>>;
-   setReload: React.Dispatch<React.SetStateAction<number>>;
-   reload: number
+  setReload: React.Dispatch<React.SetStateAction<number>>;
+  reload: number;
 };
 
 type Message = {
@@ -51,33 +52,138 @@ type latestReadby = {
   image: string | null;
 }[];
 
-export default function Messages({ activeId, setActiveId, setReload , reload}: Props) {
-  const [chatHistory, setChatHistory] = useState<Message[]>([]);
+type User = {
+  id: string;
+  username: string;
+  image: string | null;
+};
 
+export default function Messages({
+  activeId,
+  setActiveId,
+  setReload,
+  reload,
+}: Props) {
+  const [chatHistory, setChatHistory] = useState<Message[]>([]);
+  const { socket } = useAuth();
   const clientFetch = useClientFetch();
   const [lastMessageId, setLastMessageId] = useState<string | null>(null);
-
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isGroup, setIsGroup] = useState(false);
   const [latestReadby, setLatestReadby] = useState<latestReadby>([]);
   const [isEditing, setIsEditing] = useState(false);
+  const sock = socket?.current;
+  const [readTimer, setReadTimer] = useState<NodeJS.Timeout | null>(null);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (!activeId) {
-      setChatHistory([]);
-      setLastMessageId(null);
-      setCurrentUserId(null);
-      setIsGroup(false);
-      setLatestReadby([]);
-      return;
-    }
+    if (!sock || !activeId) return;
 
+    sock.emit("join", activeId);
+
+    const onNew = (message: Message & { tempId?: string | null }) => {
+      if (!message || message.chatId !== activeId) return;
+
+      setChatHistory((prev) => {
+        if (message.tempId) {
+          return prev.map((m) => (m.id === message.tempId ? message : m));
+        }
+        if (prev.some((m) => m.id === message.id)) return prev;
+        return [...prev, message];
+      });
+      setLastMessageId(message.id);
+    };
+
+    const onEdit = (message: Message) => {
+      if (!message || message.chatId !== activeId) return;
+
+      setChatHistory((prev) =>
+        prev.map((m) => (m.id === message.id ? message : m))
+      );
+    };
+
+    const onDelete = (messageId: string) => {
+      setChatHistory((prev) => prev.filter((m) => m.id !== messageId));
+    };
+
+    const onLeft = ({ chatId, member }: { chatId: string; member: User }) => {
+      if (chatId !== activeId) return;
+      setChatHistory((prev) => [...prev]);
+    };
+
+    const onRead = ({
+      chatId,
+      messageId,
+      readerId,
+    }: {
+      chatId: string;
+      messageId: string;
+      readerId: string;
+    }) => {
+      if (chatId !== activeId) return;
+      setReload((i) => i + 1);
+      setChatHistory((prev) =>
+        prev.map((m) => {
+          if (m.id !== messageId) return m;
+          if (m.messageReads.some((r) => r.userId === readerId)) return m;
+          return {
+            ...m,
+            messageReads: [
+              ...m.messageReads,
+              { userId: readerId, readAt: new Date().toISOString() },
+            ],
+          };
+        })
+      );
+    };
+
+    sock.on("left_member", onLeft);
+    sock.on("message_read_by", onRead);
+    sock.on("new_message", onNew);
+    sock.on("edited_message", onEdit);
+    sock.on("deleted_message", onDelete);
+
+    return () => {
+      sock.off("message_read_by", onRead);
+      sock.off("new_message", onNew);
+      sock.off("deleted_message", onDelete);
+      sock.off("edited_message", onEdit);
+      sock.off("left_member", onLeft);
+      sock.emit("leave", activeId);
+    };
+  }, [activeId, sock, setReload]);
+
+  useEffect(() => {
     let mounted = true;
 
     async function loadMessages() {
+      if (!activeId) {
+        setChatHistory([]);
+        setLastMessageId(null);
+        setCurrentUserId(null);
+        setIsGroup(false);
+        setLatestReadby([]);
+        return;
+      }
       try {
+        const readDebounce = (payload: {
+          messageId: string;
+          chatId: string;
+        }) => {
+          if (readTimer) {
+            clearTimeout(readTimer);
+          }
+          setReadTimer(
+            setTimeout(() => {
+              sock?.emit("message_read", payload);
+            }, 500)
+          );
+        };
+
         const res = await clientFetch(
-          `/api/chats/${activeId}/messages?limit=50&markRead=true`,
+          `/api/chats/${activeId}/messages?limit=10&markRead=true`,
           { method: "GET" }
         );
         if (!res.ok) {
@@ -88,6 +194,8 @@ export default function Messages({ activeId, setActiveId, setReload , reload}: P
 
         const data = await res.json();
 
+        readDebounce({ messageId: data.latest?.id, chatId: activeId });
+
         const messages: Message[] = Array.isArray(data.messages)
           ? data.messages
           : [];
@@ -97,8 +205,9 @@ export default function Messages({ activeId, setActiveId, setReload , reload}: P
         setCurrentUserId(data.currentUserId);
         setIsGroup(Boolean(data?.chat?.isGroup));
         setLatestReadby(data?.latestReadby ?? []);
-        console.log(data.messages.attachments);
+        setNextCursor(data.nextCursor ?? null);
         setIsEditing(false);
+        setCurrentUser(data?.currentUser ?? null);
       } catch (err) {
         if (mounted) setChatHistory([]);
         console.error(err);
@@ -108,7 +217,7 @@ export default function Messages({ activeId, setActiveId, setReload , reload}: P
     return () => {
       mounted = false;
     };
-  }, [activeId, clientFetch, isEditing, reload]);
+  }, [activeId, clientFetch, reload, sock, isEditing]);
 
   async function uploadToCloudinary(
     file: File,
@@ -182,23 +291,53 @@ export default function Messages({ activeId, setActiveId, setReload , reload}: P
         console.error("Failed to send message");
       }
 
-      setReload((i) => i + 1);
-
       const data = await res.json();
-      setChatHistory((prev) =>
-        prev ? [...prev, data.created] : [data.created]
-      );
+
+      setChatHistory((prev) => [...prev, data.created]);
+      sock?.emit("message_sent", data.created);
       setLastMessageId(data.created?.id ?? null);
+      setNextCursor(data.nextCursor ?? null);
+
+      setReload((i) => i + 1);
     } catch (err) {
       console.error(err);
-    } finally {
-      setActiveId(activeId);
     }
+  };
+
+  const loadMore = async () => {
+    if (!activeId || !nextCursor) return;
+
+    const res = await clientFetch(
+      `/api/chats/${activeId}/messages?limit=20&cursor=${nextCursor}`,
+      { method: "GET" }
+    );
+
+    if (!res.ok) return;
+
+    const data = await res.json();
+
+    const newMessages: Message[] = data.messages ?? [];
+
+    
+    setChatHistory((prev) => [...newMessages, ...prev]);
+    setNextCursor(data.nextCursor ?? null);
   };
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex-1 h-full overflow-y-auto no-scrollbar relative">
+      <div 
+      ref={scrollRef}
+      className="flex-1 h-full overflow-y-auto no-scrollbar relative">
+        {nextCursor && (
+          <div className="flex justify-center py-2">
+            <button
+              onClick={loadMore}
+              className="text-sm text-violet-800 font-semibold hover:underline active:italic active:bold active:translate-x-2 transition-transform"
+            >
+              Load older messages
+            </button>
+          </div>
+        )}
         <MessageBubbleComponent
           chatHistory={chatHistory}
           lastMessageId={lastMessageId}
@@ -211,7 +350,11 @@ export default function Messages({ activeId, setActiveId, setReload , reload}: P
       </div>
 
       <div className="sticky bottom-0 border-t">
-        <InputSend handleSubmit={handleSubmit} />
+        <InputSend
+          handleSubmit={handleSubmit}
+          activeId={activeId}
+          currentUser={currentUser}
+        />
       </div>
     </div>
   );

@@ -2,9 +2,22 @@
 import { useClientFetch } from "@/lib/clientAuth";
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
+import { useAuth } from "@/app/contexts/AuthContext";
 
 type Props = {
   handleCreate: () => void;
+  setNewChat: React.Dispatch<React.SetStateAction<Conversation | null>>;
+};
+
+type Conversation = {
+  name: string | null;
+    id: string;
+    image: string | null;
+    createdAt: Date;
+    isGroup: boolean;
+    lastMessageAt: Date | null;
+    lastMessage: string | null;
+  
 };
 
 type User = {
@@ -14,7 +27,9 @@ type User = {
   image?: string;
 };
 
-const CreateChatHelper = ({ handleCreate }: Props) => {
+const CreateChatHelper = ({ handleCreate, setNewChat }: Props) => {
+  const { socket } = useAuth();
+  const sock = socket.current;
   const [keyword, setKeyword] = useState("");
   const [users, setUsers] = useState<User[]>([]);
   const [selectUsers, setSelectUsers] = useState<User[]>([]);
@@ -119,12 +134,12 @@ const CreateChatHelper = ({ handleCreate }: Props) => {
     e.preventDefault();
     setError(null);
 
-    
-
     const uploaded = await uploadToCloudinary(file);
     const imageUrl = uploaded?.secure_url ?? null;
     const id = selectUsers.map((u) => u.id);
-    if(id.length === 0) return toast.error("Must have atleast one user to chat")
+    if (id.length === 0)
+      return toast.error("Must have atleast one user to chat");
+    if (id.length > 1 && !chatName) return toast.error("Must have a chat name");
     try {
       const res = await clientFetch("/api/chats", {
         method: "POST",
@@ -135,9 +150,11 @@ const CreateChatHelper = ({ handleCreate }: Props) => {
       });
 
       if (res.status === 400) {
-        
         toast.error("You already have that chat");
       }
+      const data = await res.json();
+      setNewChat(data.data);
+      sock?.emit("create_chat", data.data);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -160,13 +177,13 @@ const CreateChatHelper = ({ handleCreate }: Props) => {
         onClick={handleCreate}
       >
         <div
-          className="min-h-70 relative z-50 rounded-xl flex flex-col items-center space-y-4 border border-white/20
+          className="min-h-70 relative z-50 rounded-xl flex flex-col items-center space-y-4 border border-white/20 bg-black
   bg-[radial-gradient(1200px_circle_at_20%_-10%,rgba(56,189,248,0.25),transparent_40%),radial-gradient(900px_circle_at_80%_10%,rgba(168,85,247,0.25),transparent_80%)] w-full max-w-md p-6  "
-       onClick={(e) => e.stopPropagation()}
-       >
+          onClick={(e) => e.stopPropagation()}
+        >
           <button
             onClick={handleCreate}
-            className="relative bottom-4 right-50 text-gray-200 hover:text-gray-800 text-xl font-bold"
+            className="relative bottom-4 right-50 text-slate-400 hover:text-white text-xl font-bold"
           >
             ×
           </button>
@@ -199,9 +216,9 @@ const CreateChatHelper = ({ handleCreate }: Props) => {
                     e.preventDefault();
                     handleNext();
                   }
-                  if(e.key === "Enter" && selectUsers.length === 1){
-                    e.preventDefault()
-                    handleCreate()
+                  if (e.key === "Enter" && selectUsers.length === 1) {
+                    e.preventDefault();
+                    handleCreate();
                   }
                 }}
                 type="text"
@@ -241,7 +258,7 @@ const CreateChatHelper = ({ handleCreate }: Props) => {
                     No users found
                   </p>
                 )}
-                {users.length === 0 && keyword.length ===0 && (
+                {users.length === 0 && keyword.length === 0 && (
                   <p className="text-sm text-gray-400 text-center">
                     Type To Find Users
                   </p>
@@ -254,7 +271,7 @@ const CreateChatHelper = ({ handleCreate }: Props) => {
             <button
               type="submit"
               onClick={createChat}
-              className="shadow-lg mt-4  bg-[#334155] px-16 py-2 w-full/2 rounded-full font-medium active:scale-105 hover:bg-[#64748B] cursor-pointer focus:outline-none focus:ring focus:ring-[#6B7280] focus:ring-offset-1 active:bg-[#64748B]"
+              className="shadow-lg mt-4  bg-[#334155] px-16 py-2 w-full/2 rounded-full font-medium active:scale-105 hover:bg-[#64748B] cursor-pointer focus:outline-none focus:ring focus:ring-slate-200 focus:ring-offset-1 active:bg-[#64748B]"
             >
               Create Chat
             </button>
@@ -281,9 +298,9 @@ const CreateChatHelper = ({ handleCreate }: Props) => {
                    focus:ring-2 focus:ring-[#6B7280]
                    transition"
                 onKeyDown={(e) => {
-                   if(e.key === "Enter" && selectUsers.length > 1 && !next){
-                    e.preventDefault()
-                    handleCreate()
+                  if (e.key === "Enter" && selectUsers.length > 1 && !next) {
+                    e.preventDefault();
+                    handleCreate();
                   }
                 }}
               />
@@ -322,9 +339,8 @@ const CreateChatHelper = ({ handleCreate }: Props) => {
           )}
           {!users && <p>Type to find Users</p>}
         </div>
-          {error && <p className="text-red-600">{error}</p>}
+        {error && <p className="text-red-600">{error}</p>}
       </form>
-    
     </div>
   );
 };

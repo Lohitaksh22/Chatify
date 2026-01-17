@@ -364,7 +364,6 @@ const Page = () => {
             onClick={async () => {
               if (preview && preview.startsWith("blob:")) URL.revokeObjectURL(preview);
               setFile(null);
-              setPreview(null);
               const newFile = null;
               await update(newFile);
             }}
@@ -389,7 +388,7 @@ const Page = () => {
         <button
           type="button"
           onClick={() => router.push("/")}
-          className="text-md font-semibold bg-gradient-to-br from-[#1E3A8A] to-[#3B82F6] text-white px-4 py-3 rounded-xl hover:opacity-95 active:scale-95 transition"
+          className="text-md font-semibold bg-gradient-to-br from-[#7d3bf6] to-[#3902b0]  px-4 py-3 rounded-xl hover:opacity-95 active:scale-95 transition"
         >
           Back to Chats
         </button>
@@ -401,7 +400,7 @@ const Page = () => {
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
       <div className="fixed inset-0 backdrop-blur-xl" onClick={() => setIsEditingPassword(false)} />
       <div className="relative z-10 w-full max-w-md rounded-lg p-6 shadow-xl bg-gradient-to-br from-[#0B1220] via-[#111C2F] to-[#020617] border border-white/10">
-        <h3 className="text-lg font-bold text-[#EAF2FF]">Change password</h3>
+        <h3 className="text-lg font-bold">Change password</h3>
 
         <div className="mt-4 space-y-3">
           <label className="block text-sm font-medium text-slate-200">

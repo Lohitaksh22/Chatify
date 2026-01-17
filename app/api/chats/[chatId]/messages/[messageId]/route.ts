@@ -75,7 +75,7 @@ export async function PATCH(req: Request, {params}: {params: {chatId: string; me
     }
 
     return NextResponse.json(
-      {msg: "Updated Message"},
+      {data: res},
       {status: 200}
     )
 
@@ -142,7 +142,7 @@ export async function DELETE(req:Request, {params}: {params: {chatId: string; me
     ])
 
      return NextResponse.json(
-      {msg: "Message deleted successfully"},
+      {data: message},
       {status: 200}
     )
 

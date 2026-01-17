@@ -181,9 +181,11 @@ export async function PATCH(req: Request, { params }: { params: { chatId: string
       where:{
         id: chatId
       },
-      data: update
+      data: update,
+      include: {
+        chatMembers: true
       
-    })
+    }})
 
     return NextResponse.json(
       {data: updatedChat},

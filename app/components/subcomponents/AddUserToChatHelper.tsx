@@ -69,13 +69,13 @@ function AddUserToChatHelper({ addUserToChat, setAddingUser, activeId }: Props) 
     className="fixed inset-0 z-40 flex items-center justify-center p-4 backdrop-blur-lg min-h-screen">
       <div
       onClick={(e) => e.stopPropagation()}
-        className="min-h-70 relative z-50 rounded-xl flex flex-col items-center space-y-4 border border-white/20
+        className="min-h-70 relative z-50 rounded-xl flex flex-col items-center space-y-4 border border-white/20 bg-black
   bg-[radial-gradient(1200px_circle_at_20%_-10%,rgba(56,189,248,0.25),transparent_40%),radial-gradient(900px_circle_at_80%_10%,rgba(168,85,247,0.25),transparent_80%)] w-full max-w-md p-6  "
       >
         
         <button
           onClick={() => setAddingUser(false)}
-          className="relative bottom-4 right-50 text-gray-200 hover:text-gray-800 text-xl font-bold"
+          className="relative bottom-4 right-50 text-slate-400 hover:text-white text-xl font-bold"
         >
           ×
         </button>

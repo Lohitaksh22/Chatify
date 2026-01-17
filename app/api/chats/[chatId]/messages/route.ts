@@ -43,23 +43,25 @@ export async function GET(req: Request, { params }: { params: { chatId: string }
 
 
     const url = new URL(req.url)
-    const limitParam = Number(url.searchParams.get("limit")) || 50
-    const limit = Math.min(Math.max(limitParam, 1), 200)
-    const cursor = url.searchParams.get("cursor") || undefined
+    const take = Math.min(Number(url.searchParams.get("limit") ?? 20), 100)
+    const cursor = url.searchParams.get("cursor") ?? undefined
 
     const messages = await prisma.messages.findMany({
       where: { chatId },
-      orderBy: { createdAt: "asc" },
+      orderBy: { createdAt: "desc" },
+      take,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       include: {
         sender: { select: { id: true, username: true, image: true } },
         attachments: true,
-        messageReads: {
-          include: { user: { select: { id: true, username: true, image: true } } },
-        },
       },
-      take: limit,
-      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-    });
+    })
+
+
+
+    const nextCursor = messages.length ? messages[messages.length - 1].id : null
+    
+    messages.reverse()
 
     const markRead = url.searchParams.get("markRead") === "true"
     const latest = messages.length ? messages[messages.length - 1] : null
@@ -81,9 +83,12 @@ export async function GET(req: Request, { params }: { params: { chatId: string }
       readBy = readers.map((r) => r.user ?? null).filter(Boolean)
     }
 
+    const currentUser = await prisma.user.findUnique({
+      where: { id: currentUserId },
+    })
 
-    return NextResponse.json({ chat, messages, currentUserId, latestReadby: readBy }, { status: 200 })
 
+    return NextResponse.json({ chat, messages, currentUserId, latestReadby: readBy, currentUser, nextCursor }, { status: 200 })
 
 
   } catch (err) {
@@ -152,9 +157,9 @@ export async function POST(req: Request, { params }: { params: { chatId: string 
         }
       })
 
-       for (const a of attachments) {
-       
-        const url = a.url ?? a.secureUrl 
+      for (const a of attachments) {
+
+        const url = a.url ?? a.secureUrl
         await tx.attachment.create({
           data: {
             messageId: newMessage.id,
