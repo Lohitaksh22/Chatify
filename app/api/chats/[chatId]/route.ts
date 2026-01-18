@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCurrUserId } from "@/lib/auth";
 import { Prisma } from "@/app/generated/prisma";
 
 
-export async function GET(req: Request, { params }: { params: { chatId: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ chatId: string }>  }) {
   try {
     const currentUserId = await getCurrUserId(req)
     const { chatId } = await params
@@ -91,7 +91,7 @@ export async function GET(req: Request, { params }: { params: { chatId: string }
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { chatId: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ chatId: string }>  }) {
   try {
     const currentUserId = await getCurrUserId(req)
 
@@ -133,7 +133,7 @@ export async function DELETE(req: Request, { params }: { params: { chatId: strin
 
 }
 
-export async function PATCH(req: Request, { params }: { params: { chatId: string } }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ chatId: string }>  }) {
   try{
     const currentUserId = await getCurrUserId(req)
     const {chatId} = await params

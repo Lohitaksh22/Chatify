@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server"
+import { NextResponse, NextRequest } from "next/server"
 import prisma from "@/lib/prisma"
 import { getCurrUserId } from "@/lib/auth"
 
 
 
-export async function GET(req: Request, { params }: { params: { chatId: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ chatId: string }> }) {
   try {
     const currentUserId = await getCurrUserId(req)
 
@@ -100,7 +100,7 @@ export async function GET(req: Request, { params }: { params: { chatId: string }
   }
 }
 
-export async function POST(req: Request, { params }: { params: { chatId: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ chatId: string }>  }) {
   try {
     const currentUserId = await getCurrUserId(req)
 

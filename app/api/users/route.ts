@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server"
+import { NextResponse, NextRequest } from "next/server"
 import prisma from "@/lib/prisma"
 import { getCurrUserId } from "@/lib/auth"
 
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
     const userId = await getCurrUserId(req)
     

@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server"
+import { NextResponse, NextRequest } from "next/server"
 import prisma from "@/lib/prisma"
 import { getCurrUserId } from "@/lib/auth";
 
-export async function PATCH(req: Request, {params}: {params: {chatId: string; messageId: string} }){
+export async function PATCH(req: NextRequest, {params}: {params: Promise<{chatId: string; messageId: string}> }){
  try{
      const currentUserId = await getCurrUserId(req)
 
@@ -89,7 +89,7 @@ export async function PATCH(req: Request, {params}: {params: {chatId: string; me
   }
 }
 
-export async function DELETE(req:Request, {params}: {params: {chatId: string; messageId: string}}) {
+export async function DELETE(req: NextRequest, {params}: {params: Promise<{chatId: string; messageId: string}>}) {
   try{
     const currentUserId = await getCurrUserId(req)
 

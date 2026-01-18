@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { getCurrUserId } from "@/lib/auth"
 
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
     const currentUserId = await getCurrUserId(req)
     const chatsFound = await prisma.chat.findMany({
@@ -74,7 +74,7 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const currentUserId = await getCurrUserId(req)
 

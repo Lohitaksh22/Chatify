@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCurrUserId } from "@/lib/auth"
 import bcrypt from "bcrypt"
 import { Prisma } from "@/app/generated/prisma";
 
 
-export async function PATCH(req: Request){
+export async function PATCH(req: NextRequest){
   try{
  
     const userId = await getCurrUserId(req)
@@ -60,7 +60,7 @@ export async function PATCH(req: Request){
   }
 }
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try{
     const userId = await getCurrUserId(req)
    
@@ -96,7 +96,7 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try{
      const userId = await getCurrUserId(req)
    
