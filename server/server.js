@@ -72,9 +72,7 @@ io.on("connection", (socket) => {
 
   socket.on("message_read", ({ messageId, chatId }) => {
     if (!messageId || !chatId || !userId) return;
-    socket
-      .to(`chat:${chatId}`)
-      .emit("message_read_by", { messageId, chatId, readerId: userId });
+    socket.to(`chat:${chatId}`).emit("message_read_by", { messageId, chatId, readerId: userId });
   });
 
   socket.on("message_edit", (message) => {

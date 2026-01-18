@@ -74,7 +74,7 @@ export default function Messages({
   const [latestReadby, setLatestReadby] = useState<latestReadby>([]);
   const [isEditing, setIsEditing] = useState(false);
   const sock = socket?.current;
-  const [readTimer, setReadTimer] = useState<NodeJS.Timeout | null>(null);
+ const readTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -168,19 +168,7 @@ export default function Messages({
         return;
       }
       try {
-        const readDebounce = (payload: {
-          messageId: string;
-          chatId: string;
-        }) => {
-          if (readTimer) {
-            clearTimeout(readTimer);
-          }
-          setReadTimer(
-            setTimeout(() => {
-              sock?.emit("message_read", payload);
-            }, 500)
-          );
-        };
+        
 
         const res = await clientFetch(
           `/api/chats/${activeId}/messages?limit=10&markRead=true`,
@@ -194,13 +182,22 @@ export default function Messages({
 
         const data = await res.json();
 
-        readDebounce({ messageId: data.latest?.id, chatId: activeId });
+       
 
         const messages: Message[] = Array.isArray(data.messages)
           ? data.messages
           : [];
 
         if (mounted) setChatHistory(messages);
+
+        const latestId = messages.at(-1)?.id;
+        if (sock && latestId) {
+          if (readTimer.current) clearTimeout(readTimer.current);
+          readTimer.current = setTimeout(() => {
+            sock.emit("message_read", { messageId: data.latest.id, chatId: activeId });
+          }, 500);
+        }
+        
         setLastMessageId(messages.at(-1)?.id ?? null);
         setCurrentUserId(data.currentUserId);
         setIsGroup(Boolean(data?.chat?.isGroup));

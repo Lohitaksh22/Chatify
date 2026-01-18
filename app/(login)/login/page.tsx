@@ -94,7 +94,7 @@ const Page = () => {
 
         {error && <p className="text-red-600">{error}</p>}
 
-        
+        {isValidEmail(email) && validPassword(password) &&
           <button
             type="submit"
             onClick={handleSubmit}
@@ -103,6 +103,8 @@ const Page = () => {
           >
             {isLoading ? "Going to Messages..." : "Go to Messages"}
           </button>
+
+        }
         
 
         <div className="flex space-x-2 mt-5 text-sm">
