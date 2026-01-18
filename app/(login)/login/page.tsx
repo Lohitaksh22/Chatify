@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/app/contexts/AuthContext";
+import toast from "react-hot-toast";
 
 const Page = () => {
   const router = useRouter();
@@ -44,6 +45,10 @@ const Page = () => {
       if (!res.ok) {
         const data = await res.json().catch(() => null);
         throw new Error(data?.msg || "Login failed");
+      }
+
+      if(res.status === 401){
+        toast.error("Invalid password Please enter a correct one")
       }
       const data = await res.json()
       auth?.setToken(data.accessToken)
