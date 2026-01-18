@@ -119,7 +119,7 @@ const Page = () => {
   }
 
   return (
-    <div className="bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#020617] min-h-screen flex items-center justify-center">
+    <div className="bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#020617] min-h-screen flex items-center justify-center px-4 sm:px-6">
       <form className="flex flex-col items-center space-y-4 max-w-md w-full bg-[#1F2933]  border border-white/20 p-8 rounded-2xl shadow-xl shadow-black/90">
         <h1 className="text-3xl font-bold mb-4 text-center">Register Here</h1>
 
