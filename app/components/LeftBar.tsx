@@ -52,32 +52,30 @@ const LeftBar = ({activeId, setActiveId}: Props) => {
       setReloadChats((i) => i + 1);
     }); 
 
-    sock.on("chat_updated", ({ chatid, updatedChat }: { chatid: string; updatedChat: Conversation }) => { 
-      if (chatid !== activeId) return;
+    sock.on("chat_updated", ({ chatId, updatedChat }: { chatId: string; updatedChat: Conversation }) => { 
+      if (chatId !== activeId) return;
       setChat(prev => {
         if (!prev) return prev; 
-        return prev.map(currentChat => currentChat.id === chatid ? updatedChat : currentChat);
+        return prev.map(currentChat => currentChat.id === chatId ? updatedChat : currentChat);
       });
       setReloadChats((i) => i + 1);
     });
 
-    if (newChat) {
-      sock?.emit("create_chat", newChat);
-      setTimeout(() => {
-        setChat((prev) => {
-          if (!prev) return [newChat];
-          return [newChat, ...prev];
-        });
-        setNewChat(null);
-      }, 0);
-    }
+    sock.on("chat_created", (chat: Conversation) => {
+      setChat(prev => {
+    if (!prev) return [chat];         
+    return [...prev, chat];    
+      });
+      setReloadChats((i) => i + 1);
+    })
 
     return () => {
       sock.off("new_message");
       sock.off("left_member");
       sock.off("chat_updated");
+      sock.off("chat_created")
     };      
-  }, [sock, newChat]);
+  }, [sock, activeId]);
 
  
   

@@ -256,7 +256,7 @@ export default function MessageBubbleComponent({
   return (
     <div
       ref={container}
-      className="flex flex-col gap-4 px-4 py-3 overflow-auto"
+      className="flex flex-col gap-4 px-4 py-3"
     >
       {chatHistory?.map((m, i) => {
         const isMine = currentUserId ? m?.senderId === currentUserId : false;
@@ -409,7 +409,7 @@ export default function MessageBubbleComponent({
                     readCount === 0 &&
                     isMine &&
                     m.edit === true && (
-                      <span>Edited and Delivered {dateCalc(m.createdAt)}</span>
+                      <span>Edited {dateCalc(m.createdAt)}</span>
                     )}
 
                   {showReadCount && isGroup && (

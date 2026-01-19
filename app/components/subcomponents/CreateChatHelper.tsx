@@ -154,7 +154,8 @@ const CreateChatHelper = ({ handleCreate, setNewChat }: Props) => {
       }
       const data = await res.json();
       setNewChat(data.data);
-      sock?.emit("create_chat", data.data);
+      const memberIds = selectUsers.map((user) => user.id)
+      sock?.emit("chat_create", {chat: data.data, memberIds});
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -280,7 +281,7 @@ const CreateChatHelper = ({ handleCreate, setNewChat }: Props) => {
           {selectUsers.length > 1 && !next && (
             <button
               onClick={handleNext}
-              className="shadow-lg mt-4 bg-[#334155] px-16 py-2 w-full/2 rounded-full font-medium    active:scale-105 hover:bg-[#64748B] cursor-pointer focus:outline-none focus:ring focus:ring-[#6B7280] focus:ring-offset-1 active:bg-[#64748B]"
+              className="shadow-lg mt-4 bg-[#334155] px-16 py-2 w-full/2 rounded-full font-medium    active:scale-105 hover:bg-[#64748B] cursor-pointer focus:outline-none focus:ring focus:ring-slate-200 focus:ring-offset-1 active:bg-[#64748B]"
             >
               Next
             </button>

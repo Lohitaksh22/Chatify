@@ -41,12 +41,16 @@ io.use((socket, next) => {
 io.on("connection", (socket) => {
   const userId = socket?.data?.user?.id;
   if (!userId) {
+    return
   }
+   socket.join(`user:${userId}`);
   console.log("Socket connected", socket.id, "user:", socket.data.user?.id);
 
   socket.on("disconnect", (res) => {
     console.log("Socket disconnected", socket.id, "reason:", res);
   });
+
+  
   socket.on("join", (chatId) => {
     socket.join(`chat:${chatId}`);
   });
@@ -105,7 +109,7 @@ io.on("connection", (socket) => {
     socket.to(`chat:${chatId}`).emit("left_member", { chatId, member });
   });
 
-  socket.on("leave", ({ chatId }) => {
+  socket.on("leave", ( chatId ) => {
     if (!chatId) return;
     socket.leave(`chat:${chatId}`);
   });
@@ -115,9 +119,12 @@ io.on("connection", (socket) => {
     socket.to(`chat:${chatId}`).emit("chat_updated", { chatId, updatedChat });
   });
 
-  socket.on("chat_create", (chat) => {
+  socket.on("chat_create", ({chat, memberIds}) => {
     if (!chat) return;
-    socket.to(`chat:${chat.id}`).emit("chat_created", chat);
+    
+  for (const id of memberIds) {
+    io.to(`user:${id}`).emit("chat_created", chat);
+  }
   });
 });
 const PORT = process.env.PORT || 5000;

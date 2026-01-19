@@ -338,91 +338,104 @@ const RightBar = ({ activeId, setActiveId, reload, setReload }: Props) => {
                 />
               )}
 
-              {chatData && (
-                <div className="w-full flex items-center justify-between px-2 mb-4">
-                  {chatData?.isGroup && (
-                  <h3 className="flex items-center gap-2 font-semibold">
-                    Members
-                    
-                      <button
-                        type="button"
-                        onClick={() => setAddingUser(!addingUser)}
-                      >
-                        <UserRoundPlus
-                          size={36}
-                          className="p-2 hover:text-green-600 hover:font-extrabold active:scale-105 cursor-pointer"
-                        />
-                      </button>
-                    
-                  </h3>
-                  )}
+              {chatData?.isGroup && (
+                <>
+                  <div className="w-full flex items-center justify-between px-2 mb-3">
+                    <h3 className="flex items-center gap-2 font-semibold">
+                      Members
+                      {role === "admin" && (
+                        <button
+                          type="button"
+                          onClick={() => setAddingUser(!addingUser)}
+                        >
+                          <UserRoundPlus
+                            size={36}
+                            className="p-2 hover:text-green-600 hover:font-extrabold active:scale-105 cursor-pointer"
+                          />
+                        </button>
+                      )}
+                    </h3>
 
-                  <span className="text-md">{chatData.members?.length}</span>
-                  {(chatData?.members?.length === 0 || !chatData?.members) && chatData?.isGroup && (
-                    <div className="text-md ml-4 text-gray-400 italic">
-                      0 (Just You)
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {addingUser && (
-                <AddUserToChatHelper
-                  addUserToChat={addUserToChat}
-                  setAddingUser={setAddingUser}
-                  activeId={activeId}
-                />
-              )}
-
-              {chatData?.members?.map((mem) => (
-                <div
-                  key={mem.username}
-                  className="flex items-center justify-center gap-3 p-2 rounded-lg bg-[#262A33] hover:bg-[#313644] border border-white/5 cursor-pointer transition min-w-full w-full"
-                >
-                  <img
-                    src={mem.image || "/avatar.png"}
-                    alt={mem.username}
-                    className="w-10 h-10 rounded-full object-fit object-cover"
-                  />
-
-                  <div className="flex flex-col w-full">
-                    <span className="text-sm truncate font-medium ">
-                      {mem.username}
-                    </span>
-                    <div className=" flex flex-col text-xs truncate gap-1 text-gray-400">
-                      <p>
-                        Joined:{" "}
-                        {mem.joinedAt
-                          ? new Date(mem.joinedAt).toLocaleDateString("en-GB")
-                          : ""}
-                      </p>
-                      <p>Role: {mem.role}</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-md">
+                        {chatData.members?.length ?? 0}
+                      </span>
+                      {(chatData.members?.length ?? 0) === 0 && (
+                        <div className="text-md text-gray-400 italic">
+                          0 (Just You)
+                        </div>
+                      )}
                     </div>
                   </div>
-                  {role === "admin" && (
-                    <div className="flex items-center gap-2">
-                      <button
-                        value={mem.username}
-                        onClick={() => {
-                          promoteRole(mem.username);
-                        }}
-                        className="ml-1  hover:text-amber-400 hover:font-extrabold active:scale-105 cursor-pointer"
-                        title="Promote"
-                      >
-                        <UserStar />
-                      </button>
 
-                      <button
-                        onClick={() => deleteUser(mem.username)}
-                        className="p-2 hover:text-red-600 hover:font-extrabold active:scale-105 cursor-pointer"
-                        title="Remove"
-                      >
-                        <UserRoundX />
-                      </button>
-                    </div>
+                  {addingUser && (
+                    <AddUserToChatHelper
+                      addUserToChat={addUserToChat}
+                      setAddingUser={setAddingUser}
+                      activeId={activeId}
+                    />
                   )}
-                </div>
-              ))}
+
+                  <div
+                    className={[
+                      "space-y-2",
+                      (chatData.members?.length ?? 0) > 2
+                        ? "max-h-32 overflow-y-auto no-scrollbar pr-1"
+                        : "",
+                    ].join(" ")}
+                  >
+                    {chatData.members?.map((mem) => (
+                      <div
+                        key={mem.username}
+                        className="flex items-center justify-center gap-3 p-2 rounded-lg bg-[#262A33] hover:bg-[#313644] border border-white/5 cursor-pointer transition min-w-full w-full"
+                      >
+                        <img
+                          src={mem.image || "/avatar.png"}
+                          alt={mem.username}
+                          className="w-8 h-8 rounded-full object-fit object-cover"
+                        />
+
+                        <div className="flex flex-col w-full">
+                          <span className="text-sm truncate font-medium">
+                            {mem.username}
+                          </span>
+                          <div className="flex flex-col text-xs truncate gap-1 text-gray-400">
+                            <p>
+                              Joined:{" "}
+                              {mem.joinedAt
+                                ? new Date(mem.joinedAt).toLocaleDateString(
+                                    "en-GB"
+                                  )
+                                : ""}
+                            </p>
+                            <p>Role: {mem.role}</p>
+                          </div>
+                        </div>
+
+                        {role === "admin" && (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => promoteRole(mem.username)}
+                              className="ml-1 hover:text-amber-400 hover:font-extrabold active:scale-105 cursor-pointer"
+                              title="Promote"
+                            >
+                              <UserStar />
+                            </button>
+
+                            <button
+                              onClick={() => deleteUser(mem.username)}
+                              className="p-2 hover:text-red-600 hover:font-extrabold active:scale-105 cursor-pointer"
+                              title="Remove"
+                            >
+                              <UserRoundX />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
 
               {attachData?.length != 0 && (
                 <div className="flex-1 mt-4 w-full items-center justify-center">

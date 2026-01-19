@@ -321,38 +321,41 @@ export default function Messages({
   };
 
   return (
-    <div className="flex h-full flex-col">
-      <div 
+  <div className="relative h-dvh flex flex-col">
+    <div
       ref={scrollRef}
-      className="flex-1 h-full overflow-y-auto no-scrollbar relative">
-        {nextCursor && (
-          <div className="flex justify-center py-2">
-            <button
-              onClick={loadMore}
-              className="text-sm text-violet-800 font-semibold hover:underline active:italic active:bold active:translate-x-2 transition-transform"
-            >
-              Load older messages
-            </button>
-          </div>
-        )}
-        <MessageBubbleComponent
-          chatHistory={chatHistory}
-          lastMessageId={lastMessageId}
-          currentUserId={currentUserId}
-          isGroup={isGroup}
-          latestReadby={latestReadby}
-          activeId={activeId}
-          setIsEditing={setIsEditing}
-        />
-      </div>
+      className="flex-1 overflow-y-auto no-scrollbar relative pb-24"
+    >
+      {nextCursor && (
+        <div className="flex justify-center py-2">
+          <button
+            onClick={loadMore}
+            className="text-sm text-violet-800 font-semibold hover:underline active:italic active:bold active:translate-x-2 transition-transform"
+          >
+            Load older messages
+          </button>
+        </div>
+      )}
 
-      <div className="sticky bottom-0 border-t">
-        <InputSend
-          handleSubmit={handleSubmit}
-          activeId={activeId}
-          currentUser={currentUser}
-        />
-      </div>
+      <MessageBubbleComponent
+        chatHistory={chatHistory}
+        lastMessageId={lastMessageId}
+        currentUserId={currentUserId}
+        isGroup={isGroup}
+        latestReadby={latestReadby}
+        activeId={activeId}
+        setIsEditing={setIsEditing}
+      />
     </div>
-  );
+
+    <div className="fixed bottom-0 left-0 right-0 z-50 border-t bg-[#1b1f27] pb-[env(safe-area-inset-bottom)]">
+      <InputSend
+        handleSubmit={handleSubmit}
+        activeId={activeId}
+        currentUser={currentUser}
+      />
+    </div>
+  </div>
+);
+
 }
