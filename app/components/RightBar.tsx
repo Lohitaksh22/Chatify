@@ -387,12 +387,12 @@ const RightBar = ({ activeId, setActiveId, reload, setReload }: Props) => {
                     {chatData.members?.map((mem) => (
                       <div
                         key={mem.username}
-                        className="flex items-center justify-center gap-3 p-2 rounded-lg bg-[#262A33] hover:bg-[#313644] border border-white/5 cursor-pointer transition min-w-full w-full"
+                        className="flex items-center justify-center gap-3 p-2 rounded-lg bg-[#262A33] hover:bg-[#313644] border border-white/5 cursor-pointer transition min-w-full w-full px-4"
                       >
                         <img
                           src={mem.image || "/avatar.png"}
                           alt={mem.username}
-                          className="w-6 h-6 rounded-full object-fit object-cover"
+                          className="w-8 h-8 rounded-full object-fit object-cover"
                         />
 
                         <div className="flex flex-col w-full">
@@ -419,7 +419,7 @@ const RightBar = ({ activeId, setActiveId, reload, setReload }: Props) => {
                               className="ml-1 hover:text-amber-400 hover:font-extrabold active:scale-105 cursor-pointer"
                               title="Promote"
                             >
-                              <UserStar />
+                              <UserStar size={22} />
                             </button>
 
                             <button
@@ -427,7 +427,7 @@ const RightBar = ({ activeId, setActiveId, reload, setReload }: Props) => {
                               className="p-2 hover:text-red-600 hover:font-extrabold active:scale-105 cursor-pointer"
                               title="Remove"
                             >
-                              <UserRoundX />
+                              <UserRoundX size={22} />
                             </button>
                           </div>
                         )}
