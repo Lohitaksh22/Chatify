@@ -380,7 +380,7 @@ const RightBar = ({ activeId, setActiveId, reload, setReload }: Props) => {
                     className={[
                       "space-y-2",
                       (chatData.members?.length ?? 0) > 2
-                        ? "max-h-32 overflow-y-auto no-scrollbar pr-1"
+                        ? "max-h-20 overflow-y-auto no-scrollbar pr-1"
                         : "",
                     ].join(" ")}
                   >
@@ -392,7 +392,7 @@ const RightBar = ({ activeId, setActiveId, reload, setReload }: Props) => {
                         <img
                           src={mem.image || "/avatar.png"}
                           alt={mem.username}
-                          className="w-8 h-8 rounded-full object-fit object-cover"
+                          className="w-6 h-6 rounded-full object-fit object-cover"
                         />
 
                         <div className="flex flex-col w-full">
