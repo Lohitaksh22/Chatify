@@ -256,7 +256,7 @@ export default function MessageBubbleComponent({
   return (
     <div
       ref={container}
-      className="flex flex-col gap-4 px-4 py-3"
+      className="flex flex-col gap-4 px-4 py-3 overflow-auto"
     >
       {chatHistory?.map((m, i) => {
         const isMine = currentUserId ? m?.senderId === currentUserId : false;
