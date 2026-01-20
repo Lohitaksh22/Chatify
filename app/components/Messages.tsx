@@ -112,22 +112,32 @@ export default function Messages({
           } catch (err) {
             console.error("Failed to mark read on new message", err);
           }
-          setChatHistory((prev) =>
-            prev.map((m) =>
-              m.id === message.id
-                ? {
-                    ...m,
-                    messageReads: [
-                      ...(m.messageReads ?? []),
-                      {
-                        userId: currentUserId!,
-                        readAt: new Date().toISOString(),
-                      },
-                    ],
-                  }
-                : m
-            )
-          );
+          const me =
+            currentUser ??
+            (currentUserId
+              ? { id: currentUserId, username: "", image: null }
+              : null);
+          if (me) {
+            setChatHistory((prev) =>
+              prev.map((m) =>
+                m.id === message.id
+                  ? {
+                      ...m,
+                      messageReads: [
+                        ...(m.messageReads ?? []),
+                        {
+                          messageId: m.id,
+                          id: `optimistic-${me.id}-${Date.now()}`,
+                          userId: me.id,
+                          readAt: new Date().toISOString(),
+                          user: me,
+                        },
+                      ],
+                    }
+                  : m
+              )
+            );
+          }
         }, 300);
       }
     };
@@ -203,7 +213,16 @@ export default function Messages({
       sock.off("left_member", onLeft);
       sock.emit("leave", activeId);
     };
-  }, [activeId, sock, setReload, chatHistory, clientFetch, currentUser, currentUserId, latestReadby]);
+  }, [
+    activeId,
+    sock,
+    setReload,
+    chatHistory,
+    clientFetch,
+    currentUser,
+    currentUserId,
+    latestReadby,
+  ]);
 
   useEffect(() => {
     let mounted = true;
