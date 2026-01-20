@@ -131,7 +131,7 @@ export default function InputSend({ handleSubmit, activeId, currentUser }: Props
                   onClick={(e) => {
                     e.stopPropagation();
                   }}
-                  className="relative z-100 rounded-xl flex flex-col items-center space-y-4 bg-black border-white/10 bg-[radial-gradient(1200px_circle_at_20%_-10%,rgba(56,189,248,0.25),transparent_40%),radial-gradient(900px_circle_at_80%_10%,rgba(168,85,247,0.25),transparent_45%)] shadow-2xl w-full max-w-md p-6"
+                  className="relative z-30 rounded-xl flex flex-col items-center space-y-4 bg-black border-white/10 bg-[radial-gradient(1200px_circle_at_20%_-10%,rgba(56,189,248,0.25),transparent_40%),radial-gradient(900px_circle_at_80%_10%,rgba(168,85,247,0.25),transparent_45%)] shadow-2xl w-full max-w-md p-6"
                 >
                   <img
                     src={preview}
