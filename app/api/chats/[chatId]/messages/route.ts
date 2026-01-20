@@ -54,6 +54,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ chat
       include: {
         sender: { select: { id: true, username: true, image: true } },
         attachments: true,
+        messageReads: true
       },
     })
 

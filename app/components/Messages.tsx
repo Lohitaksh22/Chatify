@@ -94,6 +94,24 @@ export default function Messages({
         return [...prev, message];
       });
       setLastMessageId(message.id);
+
+      if (message.senderId !== currentUserId && sock && activeId) {
+    if (readTimer.current) clearTimeout(readTimer.current);
+
+    readTimer.current = setTimeout(async () => {
+      try {
+       
+        await clientFetch(
+          `/api/chats/${activeId}/messages?limit=1&markRead=true`,
+          { method: "GET" }
+        );
+
+        sock.emit("message_read", { messageId: message.id, chatId: activeId });
+      } catch (err) {
+        console.error("Failed to mark read on new message", err);
+      }
+    }, 300);
+  }
     };
 
     const onEdit = (message: Message) => {
@@ -123,21 +141,23 @@ export default function Messages({
       readerId: string;
     }) => {
       if (chatId !== activeId) return;
-      setReload((i) => i + 1);
-      setChatHistory((prev) =>
-        prev.map((m) => {
-          if (m.id !== messageId) return m;
-           const reads = m.messageReads ?? [];
-          if (reads.some((r) => r.userId === readerId)) return m;
-          return {
-            ...m,
-            messageReads: [
-              ...reads,
-              { userId: readerId, readAt: new Date().toISOString() },
-            ],
-          };
-        })
-      );
+   
+     setChatHistory((prev) =>
+    prev.map((m) => {
+      if (m.id !== messageId) return m;
+
+      const reads = m.messageReads ?? [];
+      if (reads.some((reader) => reader.userId === readerId)) return m;
+
+      return {
+        ...m,
+        messageReads: [
+          ...reads,
+          { userId: readerId, readAt: new Date().toISOString() },
+        ],
+      };
+    })
+  );
     };
 
     sock.on("left_member", onLeft);
