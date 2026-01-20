@@ -203,7 +203,7 @@ export default function Messages({
       sock.off("left_member", onLeft);
       sock.emit("leave", activeId);
     };
-  }, [activeId, sock, setReload]);
+  }, [activeId, sock, setReload, chatHistory, clientFetch, currentUser, currentUserId, latestReadby]);
 
   useEffect(() => {
     let mounted = true;
