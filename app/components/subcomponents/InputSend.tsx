@@ -116,7 +116,7 @@ export default function InputSend({ handleSubmit, activeId, currentUser }: Props
   };
 
   return (
-    <div className="relative h-25">
+    <div className="relative ">
       <form onSubmit={onSubmit} className="w-full max-w-3xl mt-4  ">
         <div className="flex  gap-3 px-4  ">
           <div className="flex-1">
@@ -125,7 +125,7 @@ export default function InputSend({ handleSubmit, activeId, currentUser }: Props
                 onClick={() => {
                   setOpen(false);
                 }}
-                className="fixed inset-0 z-100 flex items-center justify-center p-4 backdrop-blur-lg min-h-screen "
+                className="fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-lg min-h-screen "
               >
                 <div
                   onClick={(e) => {
@@ -136,7 +136,7 @@ export default function InputSend({ handleSubmit, activeId, currentUser }: Props
                   <img
                     src={preview}
                     alt="preview"
-                    className="max-h-50 rounded-md object-cover"
+                    className="max-h-48 rounded-md object-cover"
                   />
                   <div className="flex items-center gap-2">
                     <button

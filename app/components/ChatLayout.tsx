@@ -4,7 +4,6 @@ import CenterChat from "./CenterChat";
 import LeftBar from "./LeftBar";
 import RightBar from "./RightBar";
 import { useEffect, useState } from "react";
-import { useAuth } from "../contexts/AuthContext";
 import { Info, SquareMenu } from 'lucide-react';
 
 type forMobile = "list" | "chat" | "info";
@@ -12,8 +11,7 @@ type forMobile = "list" | "chat" | "info";
 const ChatLayout = () => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
-  const { socket } = useAuth();
-  const sock = socket.current;
+
   const [mobileView, setMobileView] = useState<forMobile>("list");
 
   useEffect(() => {
@@ -24,17 +22,9 @@ const ChatLayout = () => {
     }
   }, [activeId]);
 
-  useEffect(() => {
-    if (!sock || !activeId) return;
-    sock.emit("join", activeId);
-
-    return () => {
-      sock.emit("leave", activeId);
-    };
-  }, [activeId, sock]);
 
   return (
-    <div className=" bg-[radial-gradient(1200px_circle_at_20%_-10%,rgba(56,189,248,0.25),transparent_40%),radial-gradient(900px_circle_at_80%_10%,rgba(168,85,247,0.25),transparent_45%)] h-screen overflow-hidden p-6">
+    <div className=" bg-[radial-gradient(1200px_circle_at_20%_-10%,rgba(56,189,248,0.25),transparent_40%),radial-gradient(900px_circle_at_80%_10%,rgba(168,85,247,0.25),transparent_45%)] h-dvh overflow-x-hidden p-6">
       <div className="mx-auto h-full max-w-[1300px] rounded-2xl shadow-2xl border border-white/30 overflow-hidden ">
         <div className="md:hidden border-b border-white/5 bg-slate-900/70">
           

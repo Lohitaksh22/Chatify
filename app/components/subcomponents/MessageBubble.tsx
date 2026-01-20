@@ -68,11 +68,11 @@ export default function MessageBubbleComponent({
   const clientFetch = useClientFetch();
 
   useEffect(() => {
-    bottom.current?.scrollIntoView({ behavior: "auto", block: "end" });
+    bottom.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [activeId]);
 
   useEffect(() => {
-    bottom.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    bottom.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [lastMessageId]);
 
   const isLastInSequence = (index: number) => {
@@ -256,7 +256,7 @@ export default function MessageBubbleComponent({
   return (
     <div
       ref={container}
-      className="flex flex-col gap-4 px-4 py-3 overflow-auto"
+      className="flex flex-col gap-4 px-4 py-3"
     >
       {chatHistory?.map((m, i) => {
         const isMine = currentUserId ? m?.senderId === currentUserId : false;
