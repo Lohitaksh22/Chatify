@@ -108,7 +108,7 @@ const CenterChat = ({ activeId, setActiveId, reload, setReload }: Props) => {
       </div>
 
       <div className="flex-1 flex overflow-hidden">
-        <div className="flex-1 h-full">
+        <div className="flex-1 min-h-0">
           <Messages
             activeId={activeId}
             setActiveId={setActiveId}
