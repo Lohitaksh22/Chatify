@@ -125,7 +125,7 @@ export default function InputSend({ handleSubmit, activeId, currentUser }: Props
                 onClick={() => {
                   setOpen(false);
                 }}
-                className="fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-lg min-h-screen "
+                className="fixed inset-0 z-40 flex items-center justify-center p-4 backdrop-blur-lg min-h-screen "
               >
                 <div
                   onClick={(e) => {

@@ -110,6 +110,12 @@ export default function Messages({
       } catch (err) {
         console.error("Failed to mark read on new message", err);
       }
+      
+      setChatHistory((prev) =>
+          prev.map((m) =>
+            m.id === message.id? {...m, messageReads: [...(m.messageReads ?? []), { userId: currentUserId!, readAt: new Date().toISOString() }]} : m
+          )
+        );
     }, 300);
   }
     };

@@ -54,14 +54,18 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ chat
       include: {
         sender: { select: { id: true, username: true, image: true } },
         attachments: true,
-        messageReads: true
+        messageReads: {
+          include: {
+            user: { select: { id: true, username: true, image: true } },
+          },
+        },
       },
     })
 
 
 
     const nextCursor = messages.length ? messages[messages.length - 1].id : null
-    
+
     messages.reverse()
 
     const markRead = url.searchParams.get("markRead") === "true"
@@ -103,7 +107,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ chat
   }
 }
 
-export async function POST(req: NextRequest, { params }: { params: Promise<{ chatId: string }>  }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ chatId: string }> }) {
   try {
     const currentUserId = await getCurrUserId(req)
 
