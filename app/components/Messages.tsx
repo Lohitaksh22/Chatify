@@ -74,7 +74,7 @@ export default function Messages({
   const [latestReadby, setLatestReadby] = useState<latestReadby>([]);
   const [isEditing, setIsEditing] = useState(false);
   const sock = socket?.current;
- const readTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const readTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -96,28 +96,40 @@ export default function Messages({
       setLastMessageId(message.id);
 
       if (message.senderId !== currentUserId && sock && activeId) {
-    if (readTimer.current) clearTimeout(readTimer.current);
+        if (readTimer.current) clearTimeout(readTimer.current);
 
-    readTimer.current = setTimeout(async () => {
-      try {
-       
-        await clientFetch(
-          `/api/chats/${activeId}/messages?limit=1&markRead=true`,
-          { method: "GET" }
-        );
+        readTimer.current = setTimeout(async () => {
+          try {
+            await clientFetch(
+              `/api/chats/${activeId}/messages?limit=1&markRead=true`,
+              { method: "GET" }
+            );
 
-        sock.emit("message_read", { messageId: message.id, chatId: activeId });
-      } catch (err) {
-        console.error("Failed to mark read on new message", err);
+            sock.emit("message_read", {
+              messageId: message.id,
+              chatId: activeId,
+            });
+          } catch (err) {
+            console.error("Failed to mark read on new message", err);
+          }
+          setChatHistory((prev) =>
+            prev.map((m) =>
+              m.id === message.id
+                ? {
+                    ...m,
+                    messageReads: [
+                      ...(m.messageReads ?? []),
+                      {
+                        userId: currentUserId!,
+                        readAt: new Date().toISOString(),
+                      },
+                    ],
+                  }
+                : m
+            )
+          );
+        }, 300);
       }
-      
-      setChatHistory((prev) =>
-          prev.map((m) =>
-            m.id === message.id? {...m, messageReads: [...(m.messageReads ?? []), { userId: currentUserId!, readAt: new Date().toISOString() }]} : m
-          )
-        );
-    }, 300);
-  }
     };
 
     const onEdit = (message: Message) => {
@@ -147,23 +159,34 @@ export default function Messages({
       readerId: string;
     }) => {
       if (chatId !== activeId) return;
-   
-     setChatHistory((prev) =>
-    prev.map((m) => {
-      if (m.id !== messageId) return m;
 
-      const reads = m.messageReads ?? [];
-      if (reads.some((reader) => reader.userId === readerId)) return m;
+      const readerUser =
+        readerId === currentUserId
+          ? currentUser
+          : latestReadby.find((user) => user.id === readerId) ||
+            chatHistory.find((m) => m.sender.id === readerId)?.sender || {
+              id: readerId,
+              username: "",
+              image: null,
+            };
 
-      return {
-        ...m,
-        messageReads: [
-          ...reads,
-          { userId: readerId, readAt: new Date().toISOString() },
-        ],
-      };
-    })
-  );
+      setChatHistory((prev) => {
+        return prev.map((m) => {
+          if (m.messageReads?.some((r) => r.userId === readerId)) return m;
+
+          return {
+            ...m,
+            messageReads: [
+              ...(m.messageReads || []),
+              {
+                userId: readerId,
+                readAt: new Date().toISOString(),
+                user: readerUser,
+              },
+            ],
+          };
+        });
+      });
     };
 
     sock.on("left_member", onLeft);
@@ -195,8 +218,6 @@ export default function Messages({
         return;
       }
       try {
-        
-
         const res = await clientFetch(
           `/api/chats/${activeId}/messages?limit=10&markRead=false`,
           { method: "GET" }
@@ -209,15 +230,13 @@ export default function Messages({
 
         const data = await res.json();
 
-       
-
         const messages: Message[] = Array.isArray(data.messages)
           ? data.messages
           : [];
 
         if (mounted) setChatHistory(messages);
 
-        const latestId =  data?.lastMessage?.id ?? messages.at(-1)?.id;
+        const latestId = data?.lastMessage?.id ?? messages.at(-1)?.id;
 
         if (readTimer.current) {
           clearTimeout(readTimer.current);
@@ -226,7 +245,6 @@ export default function Messages({
 
         if (sock && latestId && activeId) {
           readTimer.current = setTimeout(() => {
-          
             if (sock && latestId) {
               sock.emit("message_read", {
                 messageId: latestId,
@@ -235,7 +253,7 @@ export default function Messages({
             }
           }, 500);
         }
-        
+
         setLastMessageId(messages.at(-1)?.id ?? null);
         setCurrentUserId(data.currentUserId);
         setIsGroup(Boolean(data?.chat?.isGroup));
@@ -353,16 +371,16 @@ export default function Messages({
 
     const newMessages: Message[] = data.messages ?? [];
 
-    
     setChatHistory((prev) => [...newMessages, ...prev]);
     setNextCursor(data.nextCursor ?? null);
   };
 
-return (
+  return (
     <div className="flex h-full min-h-0 flex-col">
-      <div 
-      ref={scrollRef}
-      className="flex-1 overflow-y-auto min-h-0 no-scrollbar relative pb-2 md:pb-0">
+      <div
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto min-h-0 no-scrollbar relative pb-2 md:pb-0"
+      >
         {nextCursor && (
           <div className="flex justify-center py-2">
             <button
@@ -394,6 +412,3 @@ return (
     </div>
   );
 }
-
-
-
