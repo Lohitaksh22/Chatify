@@ -87,8 +87,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ chat
       where: { id: currentUserId },
     })
 
+    const lastMessage = messages.at(-1)
 
-    return NextResponse.json({ chat, messages, currentUserId, latestReadby: readBy, currentUser, nextCursor }, { status: 200 })
+
+    return NextResponse.json({ chat, messages, currentUserId, latestReadby: readBy, currentUser, nextCursor, lastMessage }, { status: 200 })
 
 
   } catch (err) {

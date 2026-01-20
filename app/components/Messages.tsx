@@ -127,11 +127,12 @@ export default function Messages({
       setChatHistory((prev) =>
         prev.map((m) => {
           if (m.id !== messageId) return m;
-          if (m.messageReads.some((r) => r.userId === readerId)) return m;
+           const reads = m.messageReads ?? [];
+          if (reads.some((r) => r.userId === readerId)) return m;
           return {
             ...m,
             messageReads: [
-              ...m.messageReads,
+              ...reads,
               { userId: readerId, readAt: new Date().toISOString() },
             ],
           };
@@ -190,11 +191,22 @@ export default function Messages({
 
         if (mounted) setChatHistory(messages);
 
-        const latestId = messages.at(-1)?.id;
-        if (sock && latestId) {
-          if (readTimer.current) clearTimeout(readTimer.current);
+        const latestId =  data?.lastMessage?.id ?? messages.at(-1)?.id;
+
+        if (readTimer.current) {
+          clearTimeout(readTimer.current);
+          readTimer.current = null;
+        }
+
+        if (sock && latestId && activeId) {
           readTimer.current = setTimeout(() => {
-            sock.emit("message_read", { messageId: data.latest.id, chatId: activeId });
+          
+            if (sock && latestId) {
+              sock.emit("message_read", {
+                messageId: latestId,
+                chatId: activeId,
+              });
+            }
           }, 500);
         }
         
@@ -324,7 +336,7 @@ return (
     <div className="flex h-full min-h-0 flex-col">
       <div 
       ref={scrollRef}
-      className="flex-1 overflow-y-auto min-h-0 no-scrollbar relative pb-5 md:pb-0">
+      className="flex-1 overflow-y-auto min-h-0 no-scrollbar relative pb-2 md:pb-0">
         {nextCursor && (
           <div className="flex justify-center py-2">
             <button

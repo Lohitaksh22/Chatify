@@ -392,7 +392,7 @@ const RightBar = ({ activeId, setActiveId, reload, setReload }: Props) => {
                         <img
                           src={mem.image || "/avatar.png"}
                           alt={mem.username}
-                          className="w-8 aspect-square rounded-full object-cover overflow-hidden"
+                          className="w-10 aspect-square rounded-full object-cover overflow-hidden"
                         />
 
                         <div className="flex flex-col w-full">
