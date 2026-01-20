@@ -36,8 +36,8 @@ export async function DELETE(req: NextRequest, { params }: {  params: Promise<{ 
     }
     await prisma.$transaction(async (tx) => {
 
-     await tx.chatMember.deleteMany({
-        where: { chatId, memberId: currentUserId },
+     await tx.chatMember.delete({
+       where: { memberId_chatId: { memberId: currentUserId, chatId } },
       });
 
       const remaining = await tx.chatMember.count({
@@ -45,15 +45,25 @@ export async function DELETE(req: NextRequest, { params }: {  params: Promise<{ 
 
       });
 
-      
+      if (remaining === 0) {
+        await tx.messageRead.deleteMany({
+          where: {
+            message: {chatId}
+          }
+        })
 
-      if (remaining < 1) {
+         await tx.attachment.deleteMany({
+          where: { message: { chatId } },
+        });
+
+        await tx.messages.deleteMany({
+          where: { chatId },
+        });
+
         await tx.chat.delete({ where: { id: chatId } });
-        return;
       }
 
-
-    });
+  });
 
 
 

@@ -129,7 +129,7 @@ const CreateChatHelper = ({ handleCreate, setNewChat }: Props) => {
   };
 
   const createChat = async (
-    e: React.FormEvent<HTMLFormElement> | React.MouseEvent
+    e: React.FormEvent<HTMLFormElement> | React.MouseEvent | React.KeyboardEvent
   ) => {
     e.preventDefault();
     setError(null);
@@ -296,12 +296,12 @@ const CreateChatHelper = ({ handleCreate, setNewChat }: Props) => {
                 onChange={(e) => setChatName(e.target.value)}
                 className="w-full rounded-xl bg-[#262A33] border border-[#374151]
                    px-4 py-3 text-sm mb-2 mt-4 outline-none
-                   focus:ring-2 focus:ring-[#6B7280]
+                   focus:ring-2 focus:ring-slatw-200
                    transition"
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && selectUsers.length > 1 && !next) {
                     e.preventDefault();
-                    handleCreate();
+                    createChat(e);
                   }
                 }}
               />

@@ -85,6 +85,7 @@ export default function Messages({
 
     const onNew = (message: Message & { tempId?: string | null }) => {
       if (!message || message.chatId !== activeId) return;
+      
 
       setChatHistory((prev) => {
         if (message.tempId) {
@@ -97,6 +98,7 @@ export default function Messages({
 
       if (message.senderId !== currentUserId && sock && activeId) {
         if (readTimer.current) clearTimeout(readTimer.current);
+        
 
         readTimer.current = setTimeout(async () => {
           try {
@@ -112,32 +114,8 @@ export default function Messages({
           } catch (err) {
             console.error("Failed to mark read on new message", err);
           }
-          const me =
-            currentUser ??
-            (currentUserId
-              ? { id: currentUserId, username: "", image: null }
-              : null);
-          if (me) {
-            setChatHistory((prev) =>
-              prev.map((m) =>
-                m.id === message.id
-                  ? {
-                      ...m,
-                      messageReads: [
-                        ...(m.messageReads ?? []),
-                        {
-                          messageId: m.id,
-                          id: `optimistic-${me.id}-${Date.now()}`,
-                          userId: me.id,
-                          readAt: new Date().toISOString(),
-                          user: me,
-                        },
-                      ],
-                    }
-                  : m
-              )
-            );
-          }
+
+          
         }, 300);
       }
     };
@@ -159,45 +137,61 @@ export default function Messages({
       setChatHistory((prev) => [...prev]);
     };
 
-    const onRead = ({
-      chatId,
-      messageId,
-      readerId,
-    }: {
-      chatId: string;
-      messageId: string;
-      readerId: string;
-    }) => {
-      if (chatId !== activeId) return;
+   const onRead = async ({
+  chatId,
+  messageId,
+  readerId,
+ 
+}: {
+  chatId: string;
+  messageId: string;
+  readerId: string;
+ 
+}) => {
 
-      const readerUser =
-        readerId === currentUserId
-          ? currentUser
-          : latestReadby.find((user) => user.id === readerId) ||
-            chatHistory.find((m) => m.sender.id === readerId)?.sender || {
-              id: readerId,
-              username: "",
-              image: null,
-            };
+  if (chatId !== activeId) return;
 
-      setChatHistory((prev) => {
-        return prev.map((m) => {
-          if (m.messageReads?.some((r) => r.userId === readerId)) return m;
+  let readerUser = latestReadby.find((user) => user.id === readerId) ?? null;
+ 
+  if (!readerUser) {
+    const fromMsg = chatHistory.find((m) => m.sender?.id === readerId);
+    if (fromMsg?.sender) {
+      readerUser = fromMsg.sender;
+    }
+  }
 
-          return {
-            ...m,
-            messageReads: [
-              ...(m.messageReads || []),
-              {
-                userId: readerId,
-                readAt: new Date().toISOString(),
-                user: readerUser,
-              },
-            ],
-          };
-        });
-      });
-    };
+  
+  if (!readerUser) readerUser = { id: readerId, username: "", image: null };
+
+  
+  setChatHistory((prev) => {  
+   
+    return prev.map((m) => {
+      if (m.id !== messageId) return m;
+
+      const reads = m.messageReads ?? [];
+      if (reads.some((r) => r.userId === readerId)) {
+       return m;
+      }
+
+      const newEntry = {
+        messageId: m.id,
+        userId: readerId,
+        readAt: new Date().toISOString(),
+        user: readerUser,
+      } 
+     
+      return { ...m, messageReads: [...reads, newEntry] };
+    });
+  });
+
+  
+  setLatestReadby((prev) => {
+    if (prev.some((u) => u.id === readerUser!.id)) return prev;
+    return [...prev, readerUser];
+  });
+};
+
 
     sock.on("left_member", onLeft);
     sock.on("message_read_by", onRead);
@@ -223,6 +217,7 @@ export default function Messages({
     currentUserId,
     latestReadby,
   ]);
+
 
   useEffect(() => {
     let mounted = true;

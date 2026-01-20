@@ -360,7 +360,7 @@ const RightBar = ({ activeId, setActiveId, reload, setReload }: Props) => {
                       <span className="text-md">
                         {chatData.members?.length ?? 0}
                       </span>
-                      {(chatData.members?.length ?? 0) === 0 && (
+                      {(chatData.members?.length ?? 0) === 0 && !chatData?.isGroup && (
                         <div className="text-md text-gray-400 italic">
                           0 (Just You)
                         </div>
@@ -534,7 +534,7 @@ const RightBar = ({ activeId, setActiveId, reload, setReload }: Props) => {
           </div>
         )}
       </div>
-      <div className="mt-auto mx-auto w-full mb-4">
+      <div className="mt-auto mx-auto w-full mb-6 md:mb-4">
         <div className="flex justify-between items-center">
           <SettingsComp></SettingsComp>
           <button onClick={leaveChat} title="Leave the chat">

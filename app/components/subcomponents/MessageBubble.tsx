@@ -374,7 +374,7 @@ export default function MessageBubbleComponent({
 
                 {activeMedia && (
                   <div
-                    className="fixed inset-0 z-[100] flex items-center justify-center  backdrop-blur-2xl"
+                    className="fixed inset-0 z-70 flex items-center justify-center  backdrop-blur-2xl"
                     onClick={() => setActiveMedia(null)}
                   >
                     <button
@@ -462,7 +462,7 @@ export default function MessageBubbleComponent({
       <div ref={bottom} />
 
       {editingMessageId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-lg min-h-screen">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:px-8  backdrop-blur-lg min-h-screen">
           <div className="  border border-white/20 bg-black rounded-xl shadow-2xl p-4 w-full max-w-lg bg-[radial-gradient(1200px_circle_at_20%_-10%,rgba(56,189,248,0.25),transparent_40%),radial-gradient(900px_circle_at_80%_10%,rgba(168,85,247,0.25),transparent_45%)] border border-white/20">
             <h3 className="font-semibold mb-2">Edit message</h3>
             <textarea
