@@ -172,7 +172,7 @@ export default function Messages({
         
 
         const res = await clientFetch(
-          `/api/chats/${activeId}/messages?limit=10&markRead=true`,
+          `/api/chats/${activeId}/messages?limit=10&markRead=false`,
           { method: "GET" }
         );
         if (!res.ok) {
