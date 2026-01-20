@@ -534,7 +534,7 @@ const RightBar = ({ activeId, setActiveId, reload, setReload }: Props) => {
           </div>
         )}
       </div>
-      <div className="mt-auto mx-auto w-full mb-8 md:mb-2">
+      <div className="mt-auto mx-auto w-full mb-10 md:mb-2">
         <div className="flex justify-between items-center">
           <SettingsComp></SettingsComp>
           <button onClick={leaveChat} title="Leave the chat">
