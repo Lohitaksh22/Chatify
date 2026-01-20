@@ -85,7 +85,7 @@ const CenterChat = ({ activeId, setActiveId, reload, setReload }: Props) => {
   
 
   return (
-    <main className="flex flex-col h-screen">
+    <main className="flex flex-col h-full min-h-0">
       <div className="shrink-0 border-b px-6 py-4">
         {chatData && (
           <div className="flex items-center">

@@ -321,10 +321,11 @@ export default function Messages({
   };
 
 return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full min-h-0 flex-col">
       <div 
       ref={scrollRef}
-      className="flex-1 overflow-y-auto no-scrollbar relative">
+      className="flex-1 overflow-y-auto no-scrollbar relative pb-20 md:pb-0
+">
         {nextCursor && (
           <div className="flex justify-center py-2">
             <button
@@ -346,7 +347,7 @@ return (
         />
       </div>
 
-      <div className="sticky bottom-0 border-t min-5">
+      <div className="sticky bottom-0 border-t z-50 pb-[env(safe-area-inset-bottom)] md:static md:pb-0">
         <InputSend
           handleSubmit={handleSubmit}
           activeId={activeId}
