@@ -116,7 +116,7 @@ export default function InputSend({ handleSubmit, activeId, currentUser }: Props
   };
 
   return (
-    <div className="relative ">
+    <div className="relative h-25 md:h-0 ">
       <form onSubmit={onSubmit} className="w-full max-w-3xl mt-4  ">
         <div className="flex  gap-3 px-4  ">
           <div className="flex-1">
