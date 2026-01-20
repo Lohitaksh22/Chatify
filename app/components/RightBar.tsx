@@ -302,18 +302,18 @@ const RightBar = ({ activeId, setActiveId, reload, setReload }: Props) => {
 
   return (
     <div
-      className=" w-full h-full min-h-0 p-6 rounded-2xl shadow-lg select-none flex flex-col items-center overflow-hidden"
+      className=" overflow-auto no-scrollbar w-full h-screen p-6 rounded-2xl shadow-lg select-none flex flex-col items-center "
       onClick={() => {
         if (open) setOpen(false);
       }}
     >
-      <div className="w-full flex-1 min-h-0 overflow-y-auto no-scrollbar">
+      <div className="w-full">
         {chatData && (
           <div className="mt-5 flex flex-col items-center w-full ">
             <img
               src={chatData?.image ?? undefined}
               alt={`${chatData.name} avatar`}
-              className="w-8 aspect-square rounded-full object-cover overflow-hidden ml-1"
+              className="w-30 h-30 rounded-full object-cover"
             />
 
             <div className="mt-10 flex flex-col items-center justify-center space-y-2">
@@ -392,7 +392,7 @@ const RightBar = ({ activeId, setActiveId, reload, setReload }: Props) => {
                         <img
                           src={mem.image || "/avatar.png"}
                           alt={mem.username}
-                          className="w-8 h-8 rounded-full object-fit object-cover"
+                          className="w-8 aspect-square rounded-full object-cover overflow-hidden"
                         />
 
                         <div className="flex flex-col w-full">
@@ -534,7 +534,7 @@ const RightBar = ({ activeId, setActiveId, reload, setReload }: Props) => {
           </div>
         )}
       </div>
-      <div className="w-full shrink-0 pt-4 pb-6">
+      <div className="mt-auto mx-auto w-full mb-4">
         <div className="flex justify-between items-center">
           <SettingsComp></SettingsComp>
           <button onClick={leaveChat} title="Leave the chat">
