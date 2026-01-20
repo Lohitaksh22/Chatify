@@ -23,10 +23,16 @@ This is a real-time chat application built using Next.js. The project focuses on
 - PostgreSQL
 - Prisma ORM
 
+## Deployment
+
+The application is deployed on Vercel:
+
+https://chatify-dun-one.vercel.app
+
 ## Project Purpose
 
 This project was built to better understand how authentication, real-time communication, and backend APIs work together in a full-stack Next.js application.
 
 ## Notes
 
-Socket.IO is currently used for broadcasting messages between connected users. The implementation prioritizes simplicity and reliability while maintaining database-backed message storage.
+Socket.IO is used primarily for broadcasting messages between connected users. The implementation prioritizes simplicity and reliability while maintaining database-backed message storage.
