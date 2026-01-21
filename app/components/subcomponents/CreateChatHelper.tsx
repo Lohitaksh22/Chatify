@@ -299,7 +299,7 @@ const CreateChatHelper = ({ handleCreate, setNewChat }: Props) => {
                    focus:ring-2 focus:ring-slatw-200
                    transition"
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" && selectUsers.length > 1 && !next) {
+                  if (e.key === "Enter" && next) {
                     e.preventDefault();
                     createChat(e);
                   }
