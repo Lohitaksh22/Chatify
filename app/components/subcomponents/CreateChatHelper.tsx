@@ -172,7 +172,7 @@ const CreateChatHelper = ({ handleCreate, setNewChat }: Props) => {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          createChat(e);
+    
         }}
         className="fixed inset-0 z-40 flex items-center justify-center p-4 backdrop-blur-lg min-h-screen"
         onClick={handleCreate}
