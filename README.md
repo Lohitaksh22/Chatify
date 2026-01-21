@@ -29,6 +29,13 @@ The application is deployed on Vercel:
 
 https://chatify-dun-one.vercel.app
 
+## Demo Account
+Email: TestUser1@gmail.com
+UserName: TestUser1  
+Password: Password#1  
+
+Use this account to quickly test authentication and real-time chat features.
+
 ## Project Purpose
 
 This project was built to better understand how authentication, real-time communication, and backend APIs work together in a full-stack Next.js application.

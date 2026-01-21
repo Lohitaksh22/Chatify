@@ -416,7 +416,7 @@ export default function Messages({
         />
       </div>
 
-      <div className="sticky bottom-0 border-t z-50 pb-[env(safe-area-inset-bottom)] md:static md:pb-0">
+      <div className="sticky bottom-0 border-t z-50 pb-[env(safe-area-inset-bottom)]  md:pb-0">
         <InputSend
           handleSubmit={handleSubmit}
           activeId={activeId}

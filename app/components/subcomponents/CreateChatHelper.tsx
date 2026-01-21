@@ -230,7 +230,7 @@ const CreateChatHelper = ({ handleCreate, setNewChat }: Props) => {
                    focus:ring-2 focus:ring-slate-200
                    transition"
               />
-              <div className="mt-4 w-full max-h-60 overflow-y-auto space-y-2">
+              <div className="mt-4 w-full max-h-60 overflow-y-auto no-scrollbar space-y-2">
                 {users?.map((user: User) => (
                   <div
                     key={user.id}
